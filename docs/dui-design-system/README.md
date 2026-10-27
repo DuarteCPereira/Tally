@@ -1,5 +1,7 @@
 # DUI-lib
 
+This repo keeps only the tokens (`tokens.json`) and these principles. Component specs and previews live in the DUI-lib artifact: https://claude.ai/artifact/AennrarNF2r6sPFfMP77cP
+
 A small, calm design system for a Compose Multiplatform UI library. It is inspired by the clarity of modern investing apps: near-monochrome, flat, with one big number per screen.
 
 ## Principles
