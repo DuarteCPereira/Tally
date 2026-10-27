@@ -52,6 +52,7 @@ import com.duarte.workouttracker.domain.WorkoutItem
 import com.duarte.workouttracker.domain.WorkoutItemType
 import com.duarte.workouttracker.domain.WorkoutSettings
 import com.duarte.workouttracker.ui.common.rememberImageBitmap
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -102,8 +103,12 @@ fun WorkoutRunScreen(workoutId: String, container: AppContainer, onExit: () -> U
     }
 
     when {
-        setup == null && !loadError -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            DuiLoadingIndicator()
+        setup == null && !loadError -> DuiScaffold {
+            var showSpinner by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { delay(250); showSpinner = true }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                if (showSpinner) DuiLoadingIndicator()
+            }
         }
         setup == null -> LoadFailure(onExit)
         else -> RunSession(setup!!, container, onExit)
@@ -131,16 +136,23 @@ private fun RunSession(setup: RunSetup, container: AppContainer, onExit: () -> U
     var actualReps by remember(engine) { mutableStateOf(state.targetReps ?: 0) }
     var restVisible by remember(engine) { mutableStateOf(false) }
     var restPaused by remember(engine) { mutableStateOf(false) }
+    var restReady by remember(engine) { mutableStateOf(false) }
+    var restTrigger by remember(engine) { mutableStateOf(0) }
     var finishedPayload by remember(engine) { mutableStateOf<FinishedWorkout?>(null) }
     var saving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf(false) }
 
     DisposableEffect(timer) { onDispose { timer.dispose() } }
-    LaunchedEffect(state.restSuggestedSeconds, state.finished) {
-        if (!state.finished && state.restMode == RestMode.AUTO && state.restSuggestedSeconds > 0) {
-            timer.start(state.restSuggestedSeconds)
-            restVisible = true
+    LaunchedEffect(state.restSuggestedSeconds, state.finished, restTrigger) {
+        if (!state.finished && state.restSuggestedSeconds > 0) {
             restPaused = false
+            if (state.restMode == RestMode.AUTO) {
+                timer.start(state.restSuggestedSeconds)
+                restReady = false
+            } else {
+                restReady = true
+            }
+            restVisible = true
         }
     }
     LaunchedEffect(remaining) {
@@ -159,6 +171,8 @@ private fun RunSession(setup: RunSetup, container: AppContainer, onExit: () -> U
     }
     val currentExercise = currentMember?.let { member -> setup.exercises.firstOrNull { it.id == member.exerciseId } }
         ?: currentItem?.exerciseId?.let { id -> setup.exercises.firstOrNull { it.id == id } }
+
+    val image = rememberImageBitmap(currentExercise?.imagePath)
 
     if (state.finished) {
         FinishSummary(
@@ -213,9 +227,10 @@ private fun RunSession(setup: RunSetup, container: AppContainer, onExit: () -> U
                     }
                 }
 
-                item {
-                    val image = rememberImageBitmap(currentExercise?.imagePath)
-                    DuiImageCard(image, "${currentExercise?.name ?: setup.workout.name} exercise photo", placeholderIcon = DuiIcons.Spark)
+                if (image != null) {
+                    item {
+                        DuiImageCard(image, "${currentExercise?.name ?: setup.workout.name} exercise photo")
+                    }
                 }
 
                 item {
@@ -252,22 +267,12 @@ private fun RunSession(setup: RunSetup, container: AppContainer, onExit: () -> U
                 Modifier.fillMaxWidth().padding(start = spacing.space4, end = spacing.space4, bottom = spacing.space4, top = spacing.space2),
                 verticalArrangement = Arrangement.spacedBy(spacing.space2),
             ) {
-                if (state.restMode == RestMode.MANUAL && state.restSuggestedSeconds > 0) {
-                    DuiButton(
-                        "Start rest  ·  ${state.restSuggestedSeconds}s",
-                        onClick = {
-                            timer.start(state.restSuggestedSeconds)
-                            restVisible = true
-                            restPaused = false
-                        },
-                        style = DuiButtonStyle.Secondary,
-                    )
-                }
                 DuiButton(
                     "Complete set",
                     onClick = {
                         engine.completeSet(actualReps)
                         cursor++
+                        restTrigger++
                         actualReps = engine.state.value.targetReps ?: 0
                     },
                 )
@@ -280,6 +285,7 @@ private fun RunSession(setup: RunSetup, container: AppContainer, onExit: () -> U
                             actualReps = engine.state.value.targetReps ?: actualReps
                             timer.skip()
                             restVisible = false
+                            restReady = false
                         },
                         modifier = Modifier.weight(1f),
                         style = DuiButtonStyle.Secondary,
@@ -292,7 +298,9 @@ private fun RunSession(setup: RunSetup, container: AppContainer, onExit: () -> U
                             cursor++
                             actualReps = engine.state.value.targetReps ?: 0
                             restVisible = false
+                            restReady = false
                             timer.skip()
+                            restTrigger++
                         },
                         modifier = Modifier.weight(1f),
                         style = DuiButtonStyle.Secondary,
@@ -302,16 +310,22 @@ private fun RunSession(setup: RunSetup, container: AppContainer, onExit: () -> U
         }
     }
 
-    if (restVisible && remaining > 0) {
+    if (restVisible && (restReady || remaining > 0)) {
         RestOverlay(
-            remaining = remaining,
+            remaining = if (restReady) state.restSuggestedSeconds else remaining,
+            ready = restReady,
+            onStart = {
+                timer.start(state.restSuggestedSeconds)
+                restReady = false
+                restPaused = false
+            },
             paused = restPaused,
             onPauseResume = {
                 if (restPaused) timer.resume() else timer.pause()
                 restPaused = !restPaused
             },
             onAdjust = { timer.addSeconds(it) },
-            onSkip = { timer.skip(); restVisible = false; restPaused = false },
+            onSkip = { timer.skip(); restVisible = false; restReady = false; restPaused = false },
         )
     }
 }
@@ -360,23 +374,36 @@ private fun RepAdjuster(target: Int, actual: Int, onAdjust: (Int) -> Unit) {
 }
 
 @Composable
-private fun RestOverlay(remaining: Int, paused: Boolean, onPauseResume: () -> Unit, onAdjust: (Int) -> Unit, onSkip: () -> Unit) {
+private fun RestOverlay(
+    remaining: Int,
+    ready: Boolean,
+    onStart: () -> Unit,
+    paused: Boolean,
+    onPauseResume: () -> Unit,
+    onAdjust: (Int) -> Unit,
+    onSkip: () -> Unit,
+) {
     val spacing = DuiTheme.spacing
+    val clock = "${(remaining / 60).toString().padStart(2, '0')}:${(remaining % 60).toString().padStart(2, '0')}"
     DuiDialog(
         onDismissRequest = { },
         title = "Take a breath",
         dismissible = false,
-        confirmButton = { DuiButton("Skip rest", onClick = onSkip) },
+        confirmButton = {
+            if (ready) DuiButton("Start rest", onClick = onStart) else DuiButton("Skip rest", onClick = onSkip)
+        },
+        dismissButton = if (ready) {
+            { DuiButton("Skip rest", onClick = onSkip, style = DuiButtonStyle.Ghost) }
+        } else null,
     ) {
-        DuiAmountText(
-            label = if (paused) "Paused" else "Resting",
-            amount = "${(remaining / 60).toString().padStart(2, '0')}:${(remaining % 60).toString().padStart(2, '0')}",
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing.space2)) {
-            DuiButton("−15 sec", onClick = { onAdjust(-15) }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
-            DuiButton("+15 sec", onClick = { onAdjust(15) }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
+        DuiAmountText(label = if (ready) "Ready" else if (paused) "Paused" else "Resting", amount = clock)
+        if (!ready) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing.space2)) {
+                DuiButton("−15 sec", onClick = { onAdjust(-15) }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
+                DuiButton("+15 sec", onClick = { onAdjust(15) }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
+            }
+            DuiButton(if (paused) "Resume timer" else "Pause timer", onClick = onPauseResume, style = DuiButtonStyle.Secondary)
         }
-        DuiButton(if (paused) "Resume timer" else "Pause timer", onClick = onPauseResume, style = DuiButtonStyle.Secondary)
     }
 }
 
@@ -419,12 +446,14 @@ private fun FinishSummary(
 
 @Composable
 private fun LoadFailure(onExit: () -> Unit) {
-    Column(Modifier.fillMaxSize().padding(DuiTheme.spacing.space4), verticalArrangement = Arrangement.Center) {
-        DuiEmptyState(
-            title = "Workout unavailable",
-            body = "This workout couldn’t be loaded. It may have been removed.",
-            actionText = "Back to workouts",
-            onAction = onExit,
-        )
+    DuiScaffold {
+        Column(Modifier.fillMaxSize().padding(DuiTheme.spacing.space4), verticalArrangement = Arrangement.Center) {
+            DuiEmptyState(
+                title = "Workout unavailable",
+                body = "This workout couldn’t be loaded. It may have been removed.",
+                actionText = "Back to workouts",
+                onAction = onExit,
+            )
+        }
     }
 }
