@@ -104,3 +104,14 @@ fun DuiAvatar(initials: String, modifier: Modifier = Modifier) {
         DuiRawText(initials, DuiTheme.typography.label, DuiTheme.colors.textPrimary, maxLines = 1)
     }
 }
+
+/** Round avatar on `surface-high` with an [icon] in `text-primary`. */
+@Composable
+fun DuiAvatar(icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier) {
+    Box(
+        modifier.size(DuiDimens.AvatarSize).background(DuiTheme.colors.surfaceHigh, DuiTheme.shapes.full),
+        contentAlignment = Alignment.Center,
+    ) {
+        DuiIcon(icon, contentDescription = null)
+    }
+}

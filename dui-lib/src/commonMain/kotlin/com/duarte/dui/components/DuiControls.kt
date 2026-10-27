@@ -120,9 +120,9 @@ fun DuiStatTile(
     val spacing = DuiTheme.spacing
     Column(
         modifier.background(DuiTheme.colors.surface, DuiTheme.shapes.lg).padding(spacing.space4),
-        verticalArrangement = Arrangement.spacedBy(spacing.space5),
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(bottom = spacing.space5), verticalAlignment = Alignment.CenterVertically) {
             DuiText(label, Modifier.weight(1f), style = DuiTextStyle.Caption, color = DuiTheme.colors.textSecondary, maxLines = 1)
             if (icon != null) DuiIcon(icon, contentDescription = null, tint = DuiTheme.colors.textSecondary)
         }
