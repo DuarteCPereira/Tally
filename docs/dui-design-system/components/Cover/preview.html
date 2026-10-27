@@ -1,0 +1,32 @@
+<!-- @dsCard height=288 -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<style>
+html,body{margin:0}
+.cover{position:relative;width:960px;height:288px;background:var(--bg);overflow:hidden;font-family:var(--font-sans)}
+.cover svg{position:absolute;left:0;top:0}
+.ac{fill:var(--accent);rx:var(--radius-lg)}
+.ink{fill:var(--fill-primary);rx:var(--radius-lg)}
+.mid{fill:var(--text-secondary);rx:var(--radius-lg)}
+.sig{fill:var(--positive);rx:var(--radius-lg)}
+.rule{stroke:var(--bg);stroke-width:1.5}
+.txt{position:absolute;left:48px;bottom:40px;width:440px}
+.name{font-size:100px;line-height:.95;font-weight:500;letter-spacing:-2px;color:var(--text-primary)}
+.tag{font-size:14px;line-height:20px;color:var(--text-secondary);margin-top:16px}
+</style></head><body>
+<div class="cover">
+<svg width="960" height="288" viewBox="0 0 960 288" aria-hidden="true">
+<!-- blocks: accent 264x192 (space-7 x4 steps), fill-primary 192x240, text-secondary 240x72 band, positive 48x48 (space-7)
+     arrangement: one tall accent slab bleeding off the top with an ink slab bleeding off the right and bottom, a gray band and one small signal square
+     pattern: hairline rules (editorial row) - the system says layers and hairlines, not borders or shadows - three rules at 72px pitch cut out of the blocks in bg
+     steps and radii: space-7 multiples, radius-lg corners -->
+<rect class="ac" x="504" y="-16" width="264" height="208"/>
+<rect class="ink" x="768" y="48" width="208" height="256"/>
+<rect class="mid" x="504" y="216" width="240" height="88"/>
+<rect class="sig" x="696" y="192" width="48" height="48"/>
+<line class="rule" x1="504" y1="72" x2="960" y2="72"/>
+<line class="rule" x1="504" y1="144" x2="960" y2="144"/>
+<line class="rule" x1="504" y1="216" x2="960" y2="216"/>
+</svg>
+<div class="txt"><div class="name">DUI-lib</div><div class="tag">Calm, flat components for money apps.</div></div>
+</div>
+</body></html>
