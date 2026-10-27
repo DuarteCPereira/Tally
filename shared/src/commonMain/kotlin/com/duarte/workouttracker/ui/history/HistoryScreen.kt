@@ -47,7 +47,8 @@ fun HistoryScreen(
     container: AppContainer,
     sessionEntries: Flow<List<SessionEntry>> = flowOf(emptyList()),
 ) {
-    val sessions by container.history.sessions.collectAsState(initial = emptyList())
+    val loadedSessions by container.history.sessions.collectAsState(initial = null)
+    val sessions = loadedSessions ?: emptyList()
     val stats by container.history.stats.collectAsState(initial = HistoryStats(0, 0, 0, 0))
     val entries by sessionEntries.collectAsState(initial = emptyList())
     var expandedSessionId by remember { mutableStateOf<String?>(null) }
@@ -75,7 +76,9 @@ fun HistoryScreen(
                 DuiText("${sessions.size} total", style = DuiTextStyle.Caption, color = DuiTheme.colors.textSecondary)
             }
         }
-        if (sessions.isEmpty()) {
+        if (loadedSessions == null) {
+            // Still loading: no empty state yet.
+        } else if (sessions.isEmpty()) {
             item { EmptyHistory() }
         } else {
             items(sessions.sortedByDescending { it.startedAt }, key = { it.id }) { session ->

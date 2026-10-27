@@ -38,7 +38,8 @@ import com.duarte.workouttracker.ui.editor.duplicateWorkoutWithItems
 
 @Composable
 fun HomeScreen(container: AppContainer, onCreate: () -> Unit, onEdit: (String) -> Unit, onStart: (String) -> Unit) {
-    val workouts by container.workouts.workouts.collectAsState(initial = emptyList())
+    val loaded by container.workouts.workouts.collectAsState(initial = null)
+    val workouts = loaded
     val scope = rememberCoroutineScope()
     var deleteTarget by remember { mutableStateOf<Workout?>(null) }
     val spacing = DuiTheme.spacing
@@ -47,7 +48,9 @@ fun HomeScreen(container: AppContainer, onCreate: () -> Unit, onEdit: (String) -
             DuiText("Workouts", style = DuiTextStyle.Title)
             DuiText("Build a routine, then show up for it.", style = DuiTextStyle.Body, color = DuiTheme.colors.textSecondary)
         }
-        if (workouts.isEmpty()) {
+        if (workouts == null) {
+            // Data is still loading: show nothing rather than flashing the empty state.
+        } else if (workouts.isEmpty()) {
             DuiEmptyState(
                 title = "Start with a simple plan",
                 body = "Create your first workout and shape it around the way you like to train.",
