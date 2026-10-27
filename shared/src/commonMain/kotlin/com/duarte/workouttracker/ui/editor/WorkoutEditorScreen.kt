@@ -69,6 +69,8 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
     var libraryDialog by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Pair<Int, Exercise>?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var newInLibrary by remember { mutableStateOf(false) }
+    var removeTarget by remember { mutableStateOf<Exercise?>(null) }
     val spacing = DuiTheme.spacing
 
     Column(Modifier.fillMaxSize()) {
@@ -120,9 +122,7 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
                         DuiButton("Add exercise", onClick = { exerciseDialog = true; editing = null }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
                         DuiButton("Add superset", onClick = { supersetDialog = true }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
                     }
-                    if (library.isNotEmpty()) {
-                        DuiButton("Browse exercise library", onClick = { libraryDialog = true }, style = DuiButtonStyle.Ghost)
-                    }
+                    DuiButton("Browse exercise library", onClick = { libraryDialog = true }, style = DuiButtonStyle.Ghost)
                 }
             }
         }
@@ -137,7 +137,7 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
         })
     }
     if (supersetDialog) {
-        SupersetFormDialog(library, initial = editingSupersetIndex?.let { items.getOrNull(it) }, onDismiss = { supersetDialog = false; editingSupersetIndex = null }, onSave = { item ->
+        SupersetFormDialog(container, library, initial = editingSupersetIndex?.let { items.getOrNull(it) }, onDismiss = { supersetDialog = false; editingSupersetIndex = null }, onSave = { item ->
             val existingIndex = editingSupersetIndex
             if (existingIndex != null && existingIndex in items.indices) items[existingIndex] = item else items.add(item)
             editingSupersetIndex = null
@@ -147,15 +147,58 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
     if (libraryDialog) {
         DuiDialog(onDismissRequest = { libraryDialog = false }, title = "Exercise library",
             confirmButton = { DuiButton("Done", onClick = { libraryDialog = false }) }) {
-            library.forEachIndexed { index, exercise ->
-                if (index > 0) DuiDivider()
-                DuiListRow(
-                    title = exercise.name,
-                    subtitle = "${exercise.defaultSets} sets · ${exercise.defaultReps} reps",
-                    onClick = { items.add(DraftItem(WorkoutItemType.REGULAR, exercise, rounds = exercise.defaultSets, reps = exercise.defaultReps, rest = exercise.defaultRestSeconds)); libraryDialog = false },
-                )
-            }
+            DuiButton("New exercise", onClick = { newInLibrary = true }, style = DuiButtonStyle.Secondary)
+            LibraryList(
+                library = library,
+                emptyText = "Your library is empty. Add your first exercise.",
+                onPick = { exercise ->
+                    items.add(DraftItem(WorkoutItemType.REGULAR, exercise, rounds = exercise.defaultSets, reps = exercise.defaultReps, rest = exercise.defaultRestSeconds))
+                    libraryDialog = false
+                },
+                onRemove = { removeTarget = it },
+            )
         }
+    }
+    if (newInLibrary) {
+        ExerciseFormDialog(container, initial = null, onDismiss = { newInLibrary = false }, onSave = { exercise ->
+            scope.launch { container.exercises.save(exercise) }
+            newInLibrary = false
+        })
+    }
+    removeTarget?.let { target ->
+        RemoveFromLibraryDialog(target, onConfirm = {
+            scope.launch { runCatching { container.exercises.delete(target.id) } }
+            removeTarget = null
+        }, onDismiss = { removeTarget = null })
+    }
+}
+
+@Composable
+private fun LibraryList(library: List<Exercise>, emptyText: String, onPick: (Exercise) -> Unit, onRemove: (Exercise) -> Unit) {
+    if (library.isEmpty()) DuiText(emptyText, color = DuiTheme.colors.textSecondary)
+    library.forEachIndexed { index, exercise ->
+        if (index > 0) DuiDivider()
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            DuiListRow(
+                title = exercise.name,
+                modifier = Modifier.weight(1f),
+                subtitle = "${exercise.defaultSets} sets · ${exercise.defaultReps} reps",
+                onClick = { onPick(exercise) },
+            )
+            DuiIconButton(DuiIcons.Close, "Remove ${exercise.name} from library", onClick = { onRemove(exercise) })
+        }
+    }
+}
+
+@Composable
+private fun RemoveFromLibraryDialog(exercise: Exercise, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    DuiDialog(
+        onDismissRequest = onDismiss,
+        title = "Remove from library?",
+        confirmButton = { DuiButton("Remove", onClick = onConfirm) },
+        dismissButton = { DuiButton("Keep exercise", onClick = onDismiss, style = DuiButtonStyle.Ghost) },
+    ) {
+        DuiText("“${exercise.name}” will be removed from your library. Workouts that already use it keep it.", color = DuiTheme.colors.textSecondary)
     }
 }
 
@@ -263,13 +306,16 @@ private fun NumberField(label: String, value: String, onChange: (String) -> Unit
 }
 
 @Composable
-private fun SupersetFormDialog(library: List<Exercise>, initial: DraftItem?, onDismiss: () -> Unit, onSave: (DraftItem) -> Unit) {
+private fun SupersetFormDialog(container: AppContainer, library: List<Exercise>, initial: DraftItem?, onDismiss: () -> Unit, onSave: (DraftItem) -> Unit) {
     val members = remember(initial) { mutableStateListOf<Exercise>().apply { addAll(initial?.members.orEmpty()) } }
     var rounds by remember(initial) { mutableStateOf((initial?.rounds ?: 3).toString()) }
     var reps by remember(initial) { mutableStateOf((initial?.reps ?: 10).toString()) }
     var rest by remember(initial) { mutableStateOf((initial?.rest ?: 60).toString()) }
     var selecting by remember { mutableStateOf(false) }
+    var creating by remember { mutableStateOf(false) }
+    var removeTarget by remember { mutableStateOf<Exercise?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
     val spacing = DuiTheme.spacing
     DuiDialog(
         onDismissRequest = onDismiss,
@@ -302,14 +348,29 @@ private fun SupersetFormDialog(library: List<Exercise>, initial: DraftItem?, onD
         }
         NumberField("Rest between rounds (seconds)", rest, { rest = it }, Modifier.fillMaxWidth())
         error?.let { DuiText(it, style = DuiTextStyle.Caption, color = DuiTheme.colors.negative) }
-        if (library.isEmpty()) DuiText("Save exercises to your library first, or add an exercise from the workout editor.", style = DuiTextStyle.Caption, color = DuiTheme.colors.textSecondary)
     }
     if (selecting) DuiDialog(onDismissRequest = { selecting = false }, title = "Choose an exercise",
         confirmButton = { DuiButton("Done", onClick = { selecting = false }) }) {
-        if (library.isEmpty()) DuiText("Your exercise library is empty. Save a regular exercise first.", color = DuiTheme.colors.textSecondary)
-        else library.forEachIndexed { index, exercise ->
-            if (index > 0) DuiDivider()
-            DuiListRow(title = exercise.name, onClick = { members.add(exercise); selecting = false })
-        }
+        DuiButton("New exercise", onClick = { creating = true }, style = DuiButtonStyle.Secondary)
+        LibraryList(
+            library = library,
+            emptyText = "Your exercise library is empty. Add a new exercise to start.",
+            onPick = { members.add(it); selecting = false },
+            onRemove = { removeTarget = it },
+        )
+    }
+    if (creating) {
+        ExerciseFormDialog(container, initial = null, onDismiss = { creating = false }, onSave = { exercise ->
+            scope.launch { container.exercises.save(exercise) }
+            members.add(exercise)
+            creating = false
+            selecting = false
+        })
+    }
+    removeTarget?.let { target ->
+        RemoveFromLibraryDialog(target, onConfirm = {
+            scope.launch { runCatching { container.exercises.delete(target.id) } }
+            removeTarget = null
+        }, onDismiss = { removeTarget = null })
     }
 }
