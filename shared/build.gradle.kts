@@ -30,6 +30,7 @@ kotlin {
             implementation(libs.compose.uiTooling)
         }
         commonMain.dependencies {
+            implementation(project(":dui-lib"))
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines)
             implementation(libs.kotlinx.coroutines.core)
