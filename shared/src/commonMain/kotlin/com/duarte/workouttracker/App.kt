@@ -3,7 +3,6 @@ package com.duarte.workouttracker
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,12 +35,7 @@ fun App(container: AppContainer = remember { AppContainer() }) {
         ThemeMode.DARK -> true
     }
     DuiTheme(darkTheme = dark) {
-        // Temporary: screens not yet migrated to DUI still read MaterialTheme and LocalContentColor.
-        WorkoutTrackerTheme(darkTheme = dark) {
-            Surface(color = DuiTheme.colors.bg, contentColor = DuiTheme.colors.textPrimary) {
-                AppContent(container)
-            }
-        }
+        AppContent(container)
     }
 }
 
