@@ -6,7 +6,7 @@ A small, calm design system for a Compose Multiplatform UI library. It is inspir
 
 - **One number leads.** Each screen has a single `display` value. Everything else is smaller and quieter.
 - **Monochrome, one accent.** Black, white and grays do the work. `accent` is the only brand colour; `positive` and `negative` appear only for gains and losses and always with a sign.
-- **Layers, not borders.** Cards are a `surface` step off `bg`. Rows are separated by a `divider` hairline. There are no shadows.
+- **Layers, not borders.** Cards are a `surface` step off `bg`. Rows are separated by a `divider` hairline. There are no shadows. Controls inside a card or dialog step up to `surface-high` so they stay visible.
 - **Both themes from the start.** Every token has a light and a dark value, and every component is previewed in both.
 - **One primary action per screen.** `fill-primary` inverts between themes, so it needs no brand colour.
 
@@ -30,7 +30,7 @@ Outline icons on a 24px grid with a 1.5px round stroke, drawn in `currentColor` 
 
 ## Using this in Compose Multiplatform
 
-Each token maps to a Kotlin property in `commonMain`: colours become a light and dark `DuiColors` class exposed through a `CompositionLocal`, type styles become `DuiTypography`, spacing and radius become `DuiSpacing` and `DuiShapes`. Components are built on `compose.foundation`, not Material 3. The font is bundled as a Compose resource so it renders the same on Android and iOS.
+Each token maps to a Kotlin property in `commonMain`: colours become a light and dark `DuiColors` class exposed through a `CompositionLocal`, type styles become `DuiTypography`, spacing and radius become `DuiSpacing` and `DuiShapes`. Components are built on `compose.foundation`, not Material 3. Beyond the first six, the library also covers screen structure (`DuiScaffold`, `DuiTopBar`, `DuiCard`), inputs (`DuiTextField`, `DuiSegmentedControl`, `DuiSwitchRow`, `DuiStepper`), overlays (`DuiDialog`, `DuiMenu`) and feedback (`DuiProgressBar`, `DuiLoadingIndicator`, `DuiBadge`), with `DuiText` and `DuiIcons` as the shared primitives. The font is bundled as a Compose resource so it renders the same on Android and iOS.
 
 ## Assumptions to confirm
 
