@@ -1,24 +1,46 @@
 package com.duarte.workouttracker.ui.editor
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.graphics.Color
+import com.duarte.dui.components.DuiBadge
+import com.duarte.dui.components.DuiButton
+import com.duarte.dui.components.DuiButtonStyle
+import com.duarte.dui.components.DuiCard
+import com.duarte.dui.components.DuiCardTone
+import com.duarte.dui.components.DuiDialog
+import com.duarte.dui.components.DuiDivider
+import com.duarte.dui.components.DuiEmptyState
+import com.duarte.dui.components.DuiIconButton
+import com.duarte.dui.components.DuiIcons
+import com.duarte.dui.components.DuiImageCard
+import com.duarte.dui.components.DuiListRow
+import com.duarte.dui.components.DuiMenu
+import com.duarte.dui.components.DuiMenuItem
+import com.duarte.dui.components.DuiText
+import com.duarte.dui.components.DuiTextField
+import com.duarte.dui.components.DuiTextStyle
+import com.duarte.dui.components.DuiTopBar
+import com.duarte.dui.theme.DuiTheme
 import com.duarte.workouttracker.AppContainer
 import com.duarte.workouttracker.domain.*
 import com.duarte.workouttracker.ui.common.rememberImageBitmap
@@ -47,48 +69,36 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
     var libraryDialog by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Pair<Int, Exercise>?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    val spacing = DuiTheme.spacing
 
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("←  Back") }
-            Spacer(Modifier.weight(1f))
-            TextButton(onClick = {
-                val trimmed = name.trim()
-                if (trimmed.isBlank()) error = "Give your workout a name first."
-                else scope.launch {
-                    val now = KotlinClock.System.now()
-                    val savedWorkout = if (workout == null) Workout("workout-${now.toEpochMilliseconds()}", trimmed, workouts.size, now) else workout.copy(name = trimmed)
-                    if (workout != null) container.workouts.delete(workout.id)
-                    container.workouts.add(savedWorkout)
-                    items.filter { it.type == WorkoutItemType.REGULAR }.mapNotNull { it.exercise }.forEach { container.exercises.save(it) }
-                    items.flatMap { it.members }.forEach { container.exercises.save(it) }
-                    DraftStore.byWorkout[savedWorkout.id] = items.toList()
-                    onBack()
-                }
-            }) { Text("Save", fontWeight = FontWeight.Bold) }
-        }
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 36.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        DuiTopBar(onBack = onBack, actionText = "Save", onAction = {
+            val trimmed = name.trim()
+            if (trimmed.isBlank()) error = "Give your workout a name first."
+            else scope.launch {
+                val now = KotlinClock.System.now()
+                val savedWorkout = if (workout == null) Workout("workout-${now.toEpochMilliseconds()}", trimmed, workouts.size, now) else workout.copy(name = trimmed)
+                if (workout != null) container.workouts.delete(workout.id)
+                container.workouts.add(savedWorkout)
+                items.filter { it.type == WorkoutItemType.REGULAR }.mapNotNull { it.exercise }.forEach { container.exercises.save(it) }
+                items.flatMap { it.members }.forEach { container.exercises.save(it) }
+                DraftStore.byWorkout[savedWorkout.id] = items.toList()
+                onBack()
+            }
+        })
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = spacing.space4, end = spacing.space4, bottom = spacing.space6), verticalArrangement = Arrangement.spacedBy(spacing.space3)) {
             item {
-                Spacer(Modifier.height(4.dp))
-                Text(if (workout == null) "BUILD YOUR PLAN" else "REFINE YOUR PLAN", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(5.dp))
-                Text(if (workout == null) "New workout" else "Edit workout", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(20.dp))
-                OutlinedTextField(value = name, onValueChange = { name = it; error = null }, modifier = Modifier.fillMaxWidth(), label = { Text("Workout name") }, placeholder = { Text("e.g. Upper body A") }, singleLine = true, shape = RoundedCornerShape(18.dp))
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 12.dp, top = 5.dp)) }
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Training flow", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.weight(1f))
-                    Text("${items.size} ${if (items.size == 1) "block" else "blocks"}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.space4)) {
+                    DuiText(if (workout == null) "New workout" else "Edit workout", style = DuiTextStyle.Title)
+                    DuiTextField(value = name, onValueChange = { name = it; error = null }, modifier = Modifier.fillMaxWidth(), label = "Workout name", placeholder = "e.g. Upper body A", error = error)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        DuiText("Training flow", style = DuiTextStyle.Title)
+                        DuiText("${items.size} ${if (items.size == 1) "block" else "blocks"}", style = DuiTextStyle.Caption, color = DuiTheme.colors.textSecondary)
+                    }
                 }
             }
             if (items.isEmpty()) item {
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow).padding(24.dp)) {
-                    Text("Your workout starts here", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(5.dp))
-                    Text("Add an exercise or group a few into a superset.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+                DuiEmptyState(title = "Your workout starts here", body = "Add an exercise or group a few into a superset.")
             }
             items(items.size, key = { index -> "${index}-${items[index].type}" }) { index ->
                 val item = items[index]
@@ -105,12 +115,14 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
                 }
             }
             item {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(onClick = { exerciseDialog = true; editing = null }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) { Text("＋ Exercise") }
-                    OutlinedButton(onClick = { supersetDialog = true }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) { Text("＋ Superset") }
-                }
-                if (library.isNotEmpty()) {
-                    TextButton(onClick = { libraryDialog = true }, modifier = Modifier.fillMaxWidth()) { Text("Browse exercise library  →") }
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.space2)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing.space2)) {
+                        DuiButton("Add exercise", onClick = { exerciseDialog = true; editing = null }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
+                        DuiButton("Add superset", onClick = { supersetDialog = true }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
+                    }
+                    if (library.isNotEmpty()) {
+                        DuiButton("Browse exercise library", onClick = { libraryDialog = true }, style = DuiButtonStyle.Ghost)
+                    }
                 }
             }
         }
@@ -133,61 +145,71 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
         })
     }
     if (libraryDialog) {
-        AlertDialog(onDismissRequest = { libraryDialog = false }, title = { Text("Exercise library") },
-            text = { LazyColumn(Modifier.heightIn(max = 420.dp)) { items(library, key = { it.id }) { exercise ->
-                TextButton(onClick = { items.add(DraftItem(WorkoutItemType.REGULAR, exercise, rounds = exercise.defaultSets, reps = exercise.defaultReps, rest = exercise.defaultRestSeconds)); libraryDialog = false }, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.fillMaxWidth()) { Text(exercise.name, fontWeight = FontWeight.SemiBold); Text("${exercise.defaultSets} sets · ${exercise.defaultReps} reps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                }
-            } } }, confirmButton = { TextButton(onClick = { libraryDialog = false }) { Text("Done") } })
+        DuiDialog(onDismissRequest = { libraryDialog = false }, title = "Exercise library",
+            confirmButton = { DuiButton("Done", onClick = { libraryDialog = false }) }) {
+            library.forEachIndexed { index, exercise ->
+                if (index > 0) DuiDivider()
+                DuiListRow(
+                    title = exercise.name,
+                    subtitle = "${exercise.defaultSets} sets · ${exercise.defaultReps} reps",
+                    onClick = { items.add(DraftItem(WorkoutItemType.REGULAR, exercise, rounds = exercise.defaultSets, reps = exercise.defaultReps, rest = exercise.defaultRestSeconds)); libraryDialog = false },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BlockMenu(onEdit: () -> Unit, onRemove: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    DuiMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+        items = listOf(DuiMenuItem("Edit", onEdit), DuiMenuItem("Remove", onRemove)),
+    ) {
+        DuiIconButton(DuiIcons.More, "More options", onClick = { expanded = true })
     }
 }
 
 @Composable
 private fun ExerciseCard(exercise: Exercise?, index: Int, count: Int, onUp: () -> Unit, onDown: () -> Unit, onEdit: () -> Unit, onRemove: () -> Unit) {
-    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Row(Modifier.fillMaxWidth().padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
+    DuiCard {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             OrderButtons(index, count, onUp, onDown)
-            Spacer(Modifier.width(13.dp))
-            Column(Modifier.weight(1f)) {
-                Text(exercise?.name ?: "Exercise", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(4.dp))
-                Text("${exercise?.defaultSets ?: 3} sets  ·  ${exercise?.defaultReps ?: 10} reps  ·  ${exercise?.defaultRestSeconds ?: 60}s rest", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(Modifier.weight(1f).padding(horizontal = DuiTheme.spacing.space3)) {
+                DuiText(exercise?.name ?: "Exercise", style = DuiTextStyle.Label)
+                DuiText("${exercise?.defaultSets ?: 3} sets  ·  ${exercise?.defaultReps ?: 10} reps  ·  ${exercise?.defaultRestSeconds ?: 60}s rest", style = DuiTextStyle.Caption, color = DuiTheme.colors.textSecondary)
             }
-            Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = onEdit, contentPadding = PaddingValues(horizontal = 8.dp)) { Text("Edit") }
-                TextButton(onClick = onRemove, contentPadding = PaddingValues(horizontal = 8.dp)) { Text("Remove", color = MaterialTheme.colorScheme.error) }
-            }
+            BlockMenu(onEdit, onRemove)
         }
     }
 }
 
 @Composable
 private fun SupersetCard(item: DraftItem, index: Int, count: Int, onUp: () -> Unit, onDown: () -> Unit, onEdit: () -> Unit, onRemove: () -> Unit) {
-    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .48f))) {
-        Row(Modifier.fillMaxWidth().padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
+    val spacing = DuiTheme.spacing
+    DuiCard(tone = DuiCardTone.Accent) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             OrderButtons(index, count, onUp, onDown)
-            Spacer(Modifier.width(13.dp))
-            Column(Modifier.weight(1f)) {
-                Text("SUPERSET  ·  ${item.rounds} ROUNDS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(7.dp))
-                item.members.forEachIndexed { i, member -> Text("${i + 1}. ${member.name}  ·  ${member.defaultReps} reps", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium) }
-                Spacer(Modifier.height(5.dp))
-                Text("${item.rest}s rest between rounds", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(Modifier.weight(1f).padding(horizontal = spacing.space3), verticalArrangement = Arrangement.spacedBy(spacing.space1)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(spacing.space2)) {
+                    DuiBadge("Superset")
+                    DuiText("${item.rounds} rounds", style = DuiTextStyle.Caption, color = DuiTheme.colors.textSecondary)
+                }
+                item.members.forEachIndexed { i, member -> DuiText("${i + 1}. ${member.name}  ·  ${member.defaultReps} reps", style = DuiTextStyle.Label) }
+                DuiText("${item.rest}s rest between rounds", style = DuiTextStyle.Caption, color = DuiTheme.colors.textSecondary)
             }
-            Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = onEdit, contentPadding = PaddingValues(horizontal = 8.dp)) { Text("Edit") }
-                TextButton(onClick = onRemove, contentPadding = PaddingValues(horizontal = 8.dp)) { Text("Remove", color = MaterialTheme.colorScheme.error) }
-            }
+            BlockMenu(onEdit, onRemove)
         }
     }
 }
 
 @Composable
 private fun OrderButtons(index: Int, count: Int, up: () -> Unit, down: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(30.dp)) {
-        TextButton(onClick = up, enabled = index > 0, contentPadding = PaddingValues(0.dp), modifier = Modifier.size(30.dp)) { Text("↑") }
-        Text("${index + 1}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        TextButton(onClick = down, enabled = index < count - 1, contentPadding = PaddingValues(0.dp), modifier = Modifier.size(30.dp)) { Text("↓") }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        DuiIconButton(DuiIcons.ArrowUp, "Move up", up, enabled = index > 0)
+        DuiText("${index + 1}", style = DuiTextStyle.Caption, color = DuiTheme.colors.textSecondary)
+        DuiIconButton(DuiIcons.ArrowDown, "Move down", down, enabled = index < count - 1)
     }
 }
 
@@ -201,41 +223,43 @@ private fun ExerciseFormDialog(container: AppContainer, initial: Exercise?, onDi
     var notes by remember(initial) { mutableStateOf(initial?.notes.orEmpty()) }
     var imagePath by remember(initial) { mutableStateOf(initial?.imagePath) }
     var validation by remember { mutableStateOf<String?>(null) }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text(if (initial == null) "Add exercise" else "Edit exercise") },
-        text = {
-            Column(Modifier.heightIn(max = 620.dp).then(Modifier), verticalArrangement = Arrangement.spacedBy(11.dp)) {
-                androidx.compose.foundation.rememberScrollState().let { scroll -> Column(Modifier.weight(1f, fill = false).verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(11.dp)) {
-                    OutlinedTextField(name, { name = it; validation = null }, label = { Text("Exercise name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        NumberField("Sets", sets, { sets = it }, Modifier.weight(1f))
-                        NumberField("Reps", reps, { reps = it }, Modifier.weight(1f))
-                    }
-                    NumberField("Rest (seconds)", rest, { rest = it }, Modifier.fillMaxWidth())
-                    OutlinedTextField(notes, { notes = it }, label = { Text("Notes (optional)") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
-                    imagePath?.let { path ->
-                        val bitmap = rememberImageBitmap(path)
-                        if (bitmap != null) Image(bitmap, contentDescription = "Exercise photo", modifier = Modifier.fillMaxWidth().height(130.dp).clip(RoundedCornerShape(14.dp)), contentScale = ContentScale.Crop)
-                        TextButton(onClick = { imagePath = null }) { Text("Remove photo") }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { scope.launch { container.platform.imagePicker.pickFromGallery()?.let { source -> imagePath = container.platform.imageStorage.copyPickedImage(source) } } }, modifier = Modifier.weight(1f)) { Text("Choose photo") }
-                        OutlinedButton(onClick = { scope.launch { container.platform.imagePicker.takePhoto()?.let { source -> imagePath = container.platform.imageStorage.copyPickedImage(source) } } }, modifier = Modifier.weight(1f)) { Text("Take photo") }
-                    }
-                    validation?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                } }
-            }
+    val spacing = DuiTheme.spacing
+    DuiDialog(
+        onDismissRequest = onDismiss,
+        title = if (initial == null) "Add exercise" else "Edit exercise",
+        confirmButton = {
+            DuiButton("Save exercise", onClick = {
+                val parsedSets = sets.toIntOrNull(); val parsedReps = reps.toIntOrNull(); val parsedRest = rest.toIntOrNull()
+                if (name.isBlank()) validation = "Enter an exercise name."
+                else if (parsedSets == null || parsedReps == null || parsedRest == null || parsedSets < 1 || parsedReps < 1 || parsedRest < 0) validation = "Use positive sets and reps, and a non-negative rest."
+                else onSave(Exercise(initial?.id ?: "exercise-${KotlinClock.System.now().toEpochMilliseconds()}", name.trim(), parsedSets, parsedReps, parsedRest, notes.trim().ifEmpty { null }, imagePath))
+            })
         },
-        confirmButton = { TextButton(onClick = {
-            val parsedSets = sets.toIntOrNull(); val parsedReps = reps.toIntOrNull(); val parsedRest = rest.toIntOrNull()
-            if (name.isBlank()) validation = "Enter an exercise name."
-            else if (parsedSets == null || parsedReps == null || parsedRest == null || parsedSets < 1 || parsedReps < 1 || parsedRest < 0) validation = "Use positive sets and reps, and a non-negative rest."
-            else onSave(Exercise(initial?.id ?: "exercise-${KotlinClock.System.now().toEpochMilliseconds()}", name.trim(), parsedSets, parsedReps, parsedRest, notes.trim().ifEmpty { null }, imagePath))
-        }) { Text("Save exercise") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+        dismissButton = { DuiButton("Cancel", onClick = onDismiss, style = DuiButtonStyle.Ghost) },
+    ) {
+        DuiTextField(name, { name = it; validation = null }, Modifier.fillMaxWidth(), label = "Exercise name")
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing.space2)) {
+            NumberField("Sets", sets, { sets = it }, Modifier.weight(1f))
+            NumberField("Reps", reps, { reps = it }, Modifier.weight(1f))
+        }
+        NumberField("Rest (seconds)", rest, { rest = it }, Modifier.fillMaxWidth())
+        DuiTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = "Notes (optional)", singleLine = false, minLines = 2)
+        imagePath?.let { path ->
+            val bitmap = rememberImageBitmap(path)
+            if (bitmap != null) DuiImageCard(bitmap, "Exercise photo")
+            DuiButton("Remove photo", onClick = { imagePath = null }, style = DuiButtonStyle.Ghost)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing.space2)) {
+            DuiButton("Choose photo", onClick = { scope.launch { container.platform.imagePicker.pickFromGallery()?.let { source -> imagePath = container.platform.imageStorage.copyPickedImage(source) } } }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
+            DuiButton("Take photo", onClick = { scope.launch { container.platform.imagePicker.takePhoto()?.let { source -> imagePath = container.platform.imageStorage.copyPickedImage(source) } } }, modifier = Modifier.weight(1f), style = DuiButtonStyle.Secondary)
+        }
+        validation?.let { DuiText(it, style = DuiTextStyle.Caption, color = DuiTheme.colors.negative) }
+    }
 }
 
 @Composable
 private fun NumberField(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier) {
-    OutlinedTextField(value, { onChange(it.filter(Char::isDigit)) }, modifier = modifier, label = { Text(label) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+    DuiTextField(value, { onChange(it.filter(Char::isDigit)) }, modifier, label = label, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
 }
 
 @Composable
@@ -246,38 +270,46 @@ private fun SupersetFormDialog(library: List<Exercise>, initial: DraftItem?, onD
     var rest by remember(initial) { mutableStateOf((initial?.rest ?: 60).toString()) }
     var selecting by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("Build a superset") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.heightIn(max = 560.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
-                Text("Move from one exercise to the next, then repeat for each round.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                members.forEachIndexed { index, exercise ->
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .5f))) {
-                        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("${index + 1}. ${exercise.name}", Modifier.weight(1f), fontWeight = FontWeight.Medium)
-                            TextButton(onClick = { if (index > 0) { val prior = members[index - 1]; members[index - 1] = exercise; members[index] = prior } }, enabled = index > 0) { Text("↑") }
-                            TextButton(onClick = { if (index < members.lastIndex) { val next = members[index + 1]; members[index + 1] = exercise; members[index] = next } }, enabled = index < members.lastIndex) { Text("↓") }
-                            TextButton(onClick = { members.removeAt(index) }) { Text("×", color = MaterialTheme.colorScheme.error) }
-                        }
-                    }
-                }
-                OutlinedButton(onClick = { selecting = true }, modifier = Modifier.fillMaxWidth()) { Text("＋ Add a member") }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NumberField("Rounds", rounds, { rounds = it }, Modifier.weight(1f))
-                    NumberField("Reps", reps, { reps = it }, Modifier.weight(1f))
-                }
-                NumberField("Rest between rounds (seconds)", rest, { rest = it }, Modifier.fillMaxWidth())
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                if (library.isEmpty()) Text("Save exercises to your library first, or add an exercise from the workout editor.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+    val spacing = DuiTheme.spacing
+    DuiDialog(
+        onDismissRequest = onDismiss,
+        title = "Build a superset",
+        confirmButton = {
+            DuiButton("Save superset", onClick = {
+                val parsedRounds = rounds.toIntOrNull(); val parsedReps = reps.toIntOrNull(); val parsedRest = rest.toIntOrNull()
+                if (members.size < 2) error = "A superset needs at least two exercises."
+                else if (parsedRounds == null || parsedReps == null || parsedRest == null || parsedRounds < 1 || parsedReps < 1 || parsedRest < 0) error = "Enter positive rounds and reps, and a non-negative rest."
+                else onSave(DraftItem(WorkoutItemType.SUPERSET, members = members.map { it.copy(defaultReps = parsedReps) }, rounds = parsedRounds, reps = parsedReps, rest = parsedRest))
+            })
         },
-        confirmButton = { TextButton(onClick = {
-            val parsedRounds = rounds.toIntOrNull(); val parsedReps = reps.toIntOrNull(); val parsedRest = rest.toIntOrNull()
-            if (members.size < 2) error = "A superset needs at least two exercises."
-            else if (parsedRounds == null || parsedReps == null || parsedRest == null || parsedRounds < 1 || parsedReps < 1 || parsedRest < 0) error = "Enter positive rounds and reps, and a non-negative rest."
-            else onSave(DraftItem(WorkoutItemType.SUPERSET, members = members.map { it.copy(defaultReps = parsedReps) }, rounds = parsedRounds, reps = parsedReps, rest = parsedRest))
-        }) { Text("Save superset") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
-    if (selecting) AlertDialog(onDismissRequest = { selecting = false }, title = { Text("Choose an exercise") },
-        text = { if (library.isEmpty()) Text("Your exercise library is empty. Save a regular exercise first.") else LazyColumn(Modifier.heightIn(max = 350.dp)) { items(library, key = { it.id }) { exercise ->
-            TextButton(onClick = { members.add(exercise); selecting = false }, modifier = Modifier.fillMaxWidth()) { Text(exercise.name, modifier = Modifier.fillMaxWidth()) }
-        } } }, confirmButton = { TextButton(onClick = { selecting = false }) { Text("Done") } })
+        dismissButton = { DuiButton("Cancel", onClick = onDismiss, style = DuiButtonStyle.Ghost) },
+    ) {
+        DuiText("Move from one exercise to the next, then repeat for each round.", style = DuiTextStyle.Body, color = DuiTheme.colors.textSecondary)
+        members.forEachIndexed { index, exercise ->
+            DuiCard(tone = DuiCardTone.Accent) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    DuiText("${index + 1}. ${exercise.name}", Modifier.weight(1f), style = DuiTextStyle.Label)
+                    DuiIconButton(DuiIcons.ArrowUp, "Move up", { if (index > 0) { val prior = members[index - 1]; members[index - 1] = exercise; members[index] = prior } }, enabled = index > 0)
+                    DuiIconButton(DuiIcons.ArrowDown, "Move down", { if (index < members.lastIndex) { val next = members[index + 1]; members[index + 1] = exercise; members[index] = next } }, enabled = index < members.lastIndex)
+                    DuiIconButton(DuiIcons.Close, "Remove ${exercise.name}", { members.removeAt(index) })
+                }
+            }
+        }
+        DuiButton("Add member", onClick = { selecting = true }, style = DuiButtonStyle.Secondary)
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing.space2)) {
+            NumberField("Rounds", rounds, { rounds = it }, Modifier.weight(1f))
+            NumberField("Reps", reps, { reps = it }, Modifier.weight(1f))
+        }
+        NumberField("Rest between rounds (seconds)", rest, { rest = it }, Modifier.fillMaxWidth())
+        error?.let { DuiText(it, style = DuiTextStyle.Caption, color = DuiTheme.colors.negative) }
+        if (library.isEmpty()) DuiText("Save exercises to your library first, or add an exercise from the workout editor.", style = DuiTextStyle.Caption, color = DuiTheme.colors.textSecondary)
+    }
+    if (selecting) DuiDialog(onDismissRequest = { selecting = false }, title = "Choose an exercise",
+        confirmButton = { DuiButton("Done", onClick = { selecting = false }) }) {
+        if (library.isEmpty()) DuiText("Your exercise library is empty. Save a regular exercise first.", color = DuiTheme.colors.textSecondary)
+        else library.forEachIndexed { index, exercise ->
+            if (index > 0) DuiDivider()
+            DuiListRow(title = exercise.name, onClick = { members.add(exercise); selecting = false })
+        }
+    }
 }

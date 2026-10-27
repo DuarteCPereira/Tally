@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.duarte.dui.internal.DuiDimens
+import com.duarte.dui.internal.LocalOnSurface
 import com.duarte.dui.internal.duiClickable
 import com.duarte.dui.internal.duiFocusRing
 import com.duarte.dui.theme.DuiTheme
@@ -60,7 +61,7 @@ fun DuiIconButton(
             .size(DuiTheme.spacing.space7)
             .duiFocusRing(source, DuiTheme.shapes.full)
             .clip(DuiTheme.shapes.full)
-            .background(if (filled) colors.surface else Color.Transparent)
+            .background(if (!filled) Color.Transparent else if (LocalOnSurface.current) colors.surfaceHigh else colors.surface)
             .duiClickable(source, Role.Button, enabled, onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -140,8 +141,9 @@ fun DuiSegmentedControl(
 ) {
     val colors = DuiTheme.colors
     val spacing = DuiTheme.spacing
+    val onSurface = LocalOnSurface.current
     Row(
-        modifier.fillMaxWidth().background(colors.surface, DuiTheme.shapes.md).padding(spacing.space1).selectableGroup(),
+        modifier.fillMaxWidth().background(if (onSurface) colors.surfaceHigh else colors.surface, DuiTheme.shapes.md).padding(spacing.space1).selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(spacing.space1),
     ) {
         options.forEachIndexed { index, option ->
@@ -154,7 +156,7 @@ fun DuiSegmentedControl(
                     .heightIn(min = spacing.space7 - spacing.space2)
                     .duiFocusRing(source, shape)
                     .clip(shape)
-                    .background(if (selected) colors.surfaceHigh else Color.Transparent)
+                    .background(if (!selected) Color.Transparent else if (onSurface) colors.bg else colors.surfaceHigh)
                     .selectable(selected, source, indication = null, role = Role.RadioButton, onClick = { onSelect(index) }),
                 contentAlignment = Alignment.Center,
             ) {

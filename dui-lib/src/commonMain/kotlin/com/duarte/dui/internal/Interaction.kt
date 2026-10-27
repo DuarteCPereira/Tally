@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -19,6 +20,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import com.duarte.dui.theme.DuiTheme
+
+/**
+ * True while content sits on a `surface` (a card or dialog). Controls then step up to `surface-high`
+ * so they stay visible without borders.
+ */
+internal val LocalOnSurface = compositionLocalOf { false }
 
 /** Draws the 2dp `focus` ring, 2dp outside [shape], while [source] is focused. */
 @Composable

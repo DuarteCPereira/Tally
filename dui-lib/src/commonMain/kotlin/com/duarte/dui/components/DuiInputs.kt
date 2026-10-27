@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
+import com.duarte.dui.internal.LocalOnSurface
 import com.duarte.dui.internal.duiFocusRing
 import com.duarte.dui.theme.DuiTheme
 
@@ -47,6 +48,7 @@ fun DuiTextField(
     val spacing = DuiTheme.spacing
     val shape = DuiTheme.shapes.md
     val source = remember { MutableInteractionSource() }
+    val fill = if (LocalOnSurface.current) colors.surfaceHigh else colors.surface
     Column(modifier, verticalArrangement = Arrangement.spacedBy(spacing.space1)) {
         if (label != null) DuiText(label, style = DuiTextStyle.Caption, color = colors.textSecondary)
         BasicTextField(
@@ -55,7 +57,7 @@ fun DuiTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .duiFocusRing(source, shape)
-                .background(colors.surface, shape)
+                .background(fill, shape)
                 .heightIn(min = spacing.space7)
                 .semantics { if (error != null) error(error) },
             textStyle = DuiTheme.typography.body.copy(color = colors.textPrimary),

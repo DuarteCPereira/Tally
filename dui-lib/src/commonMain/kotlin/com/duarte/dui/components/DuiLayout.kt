@@ -18,11 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import com.duarte.dui.internal.DuiDimens
+import com.duarte.dui.internal.LocalOnSurface
 import com.duarte.dui.internal.duiClickable
 import com.duarte.dui.internal.duiFocusRing
 import com.duarte.dui.theme.DuiTheme
@@ -130,14 +132,16 @@ fun DuiCard(
     } else {
         Modifier
     }
-    Column(
-        modifier
-            .fillMaxWidth()
-            .then(click)
-            .background(if (tone == DuiCardTone.Surface) colors.surface else colors.accentSoft, shape)
-            .padding(DuiTheme.spacing.space4),
-        content = content,
-    )
+    CompositionLocalProvider(LocalOnSurface provides (tone == DuiCardTone.Surface)) {
+        Column(
+            modifier
+                .fillMaxWidth()
+                .then(click)
+                .background(if (tone == DuiCardTone.Surface) colors.surface else colors.accentSoft, shape)
+                .padding(DuiTheme.spacing.space4),
+            content = content,
+        )
+    }
 }
 
 /** A 1px `divider` hairline. */

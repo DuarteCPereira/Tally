@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import com.duarte.dui.internal.LocalOnSurface
 import com.duarte.dui.internal.duiClickable
 import com.duarte.dui.internal.duiFocusRing
 import com.duarte.dui.theme.DuiTheme
@@ -84,14 +86,16 @@ fun DuiDialog(
                 verticalArrangement = Arrangement.spacedBy(spacing.space3),
             ) {
                 DuiText(title, style = DuiTextStyle.Title)
-                Column(
-                    Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(spacing.space3),
-                    content = content,
-                )
-                Column(Modifier.padding(top = spacing.space2), verticalArrangement = Arrangement.spacedBy(spacing.space2)) {
-                    confirmButton()
-                    dismissButton?.invoke()
+                CompositionLocalProvider(LocalOnSurface provides true) {
+                    Column(
+                        Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(spacing.space3),
+                        content = content,
+                    )
+                    Column(Modifier.padding(top = spacing.space2), verticalArrangement = Arrangement.spacedBy(spacing.space2)) {
+                        confirmButton()
+                        dismissButton?.invoke()
+                    }
                 }
             }
         }

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import com.duarte.dui.internal.DuiRawText
+import com.duarte.dui.internal.LocalOnSurface
 import com.duarte.dui.internal.duiClickable
 import com.duarte.dui.internal.duiFocusRing
 import com.duarte.dui.theme.DuiTheme
@@ -49,12 +50,13 @@ fun DuiButton(
     val shape = DuiTheme.shapes.full
     val source = remember { MutableInteractionSource() }
     val pressed by source.collectIsPressedAsState()
+    val onSurface = LocalOnSurface.current
     val (fill, content) = when {
-        !enabled -> colors.surface to colors.textDisabled
+        !enabled -> (if (onSurface) colors.surfaceHigh else colors.surface) to colors.textDisabled
         style == DuiButtonStyle.Primary -> colors.fillPrimary to colors.onPrimary
         style == DuiButtonStyle.Accent -> colors.accent to colors.onAccent
-        style == DuiButtonStyle.Secondary -> (if (pressed) colors.surfaceHigh else colors.surface) to colors.textPrimary
-        else -> (if (pressed) colors.surface else Color.Transparent) to colors.accent
+        style == DuiButtonStyle.Secondary -> (if (onSurface) (if (pressed) colors.divider else colors.surfaceHigh) else (if (pressed) colors.surfaceHigh else colors.surface)) to colors.textPrimary
+        else -> (if (pressed) (if (onSurface) colors.surfaceHigh else colors.surface) else Color.Transparent) to colors.accent
     }
     Box(
         modifier
