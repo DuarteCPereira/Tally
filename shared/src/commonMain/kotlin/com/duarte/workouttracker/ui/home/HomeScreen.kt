@@ -34,7 +34,6 @@ import com.duarte.dui.theme.DuiTheme
 import com.duarte.workouttracker.AppContainer
 import com.duarte.workouttracker.domain.Workout
 import kotlinx.coroutines.launch
-import com.duarte.workouttracker.ui.editor.duplicateWorkoutWithItems
 
 @Composable
 fun HomeScreen(container: AppContainer, onCreate: () -> Unit, onEdit: (String) -> Unit, onStart: (String) -> Unit) {
@@ -62,7 +61,7 @@ fun HomeScreen(container: AppContainer, onCreate: () -> Unit, onEdit: (String) -
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = spacing.space3)) {
                 itemsIndexed(workouts.sortedBy { it.position }, key = { _, workout -> workout.id }) { index, workout ->
                     if (index > 0) DuiDivider()
-                    WorkoutRow(workout, onEdit = { onEdit(workout.id) }, onStart = { onStart(workout.id) }, onDuplicate = { scope.launch { duplicateWorkoutWithItems(container, workout.id) } }, onDelete = { deleteTarget = workout })
+                    WorkoutRow(workout, onEdit = { onEdit(workout.id) }, onStart = { onStart(workout.id) }, onDuplicate = { scope.launch { container.workouts.duplicate(workout.id) } }, onDelete = { deleteTarget = workout })
                 }
             }
             DuiButton("New workout", onCreate, Modifier.padding(bottom = spacing.space4), style = DuiButtonStyle.Primary)

@@ -21,6 +21,12 @@ interface WorkoutRepository {
     suspend fun duplicate(id: String): Workout?
     suspend fun delete(id: String)
     suspend fun reorder(ids: List<String>)
+
+    /** Reads the saved blocks of a workout, in order. */
+    suspend fun content(workoutId: String): WorkoutContent
+
+    /** Replaces every saved block of a workout. */
+    suspend fun replaceContent(workoutId: String, content: WorkoutContent)
 }
 
 class SqlDelightWorkoutRepository(private val database: WorkoutDatabase) : WorkoutRepository {
@@ -59,6 +65,44 @@ class SqlDelightWorkoutRepository(private val database: WorkoutDatabase) : Worko
             queries.deleteWorkout(id)
             queries.selectAllWorkouts().executeAsList().forEachIndexed { index, workout ->
                 queries.updateWorkoutPosition(index.toLong(), workout.id)
+            }
+        }
+    }
+
+    override suspend fun content(workoutId: String): WorkoutContent {
+        val items = queries.selectWorkoutItems(workoutId).executeAsList().map { row ->
+            WorkoutItem(
+                id = row.id,
+                workoutId = row.workoutId,
+                position = row.position.toInt(),
+                type = WorkoutItemType.valueOf(row.type),
+                exerciseId = row.exerciseId,
+                sets = row.sets.toInt(),
+                rounds = row.rounds.toInt(),
+                reps = row.reps.toInt(),
+                restSeconds = row.restSeconds.toInt(),
+                notes = row.notes,
+            )
+        }
+        val members = items.filter { it.type == WorkoutItemType.SUPERSET }.associate { item ->
+            item.id to queries.selectSupersetMembers(item.id).executeAsList().map { row ->
+                SupersetMember(row.id, row.itemId, row.position.toInt(), row.exerciseId, row.reps.toInt())
+            }
+        }
+        return WorkoutContent(items, members)
+    }
+
+    override suspend fun replaceContent(workoutId: String, content: WorkoutContent) {
+        queries.transaction {
+            // Delete explicitly instead of relying on cascades, then write the new blocks.
+            queries.deleteSupersetMembersForWorkout(workoutId)
+            queries.deleteWorkoutItems(workoutId)
+            content.items.forEach { item ->
+                queries.insertWorkoutItem(item.id, workoutId, item.position.toLong(), item.type.name, item.exerciseId,
+                    item.sets.toLong(), item.rounds.toLong(), item.reps.toLong(), item.restSeconds.toLong(), item.notes)
+                content.members[item.id].orEmpty().forEach { member ->
+                    queries.insertSupersetMember(member.id, item.id, member.position.toLong(), member.exerciseId, member.reps.toLong())
+                }
             }
         }
     }

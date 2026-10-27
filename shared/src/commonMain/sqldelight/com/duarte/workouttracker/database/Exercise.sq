@@ -105,6 +105,12 @@ DELETE FROM Workout WHERE id = ?;
 updateWorkoutPosition:
 UPDATE Workout SET position = ? WHERE id = ?;
 
+deleteSupersetMembersForWorkout:
+DELETE FROM SupersetMember WHERE itemId IN (SELECT id FROM WorkoutItem WHERE workoutId = ?);
+
+deleteWorkoutItems:
+DELETE FROM WorkoutItem WHERE workoutId = ?;
+
 insertWorkoutItem:
 INSERT INTO WorkoutItem(id, workoutId, position, type, exerciseId, sets, rounds, reps, restSeconds, notes)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

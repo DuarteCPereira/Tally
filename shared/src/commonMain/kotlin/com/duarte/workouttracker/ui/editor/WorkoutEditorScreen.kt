@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -44,15 +45,28 @@ import com.duarte.dui.theme.DuiTheme
 import com.duarte.workouttracker.AppContainer
 import com.duarte.workouttracker.domain.*
 import com.duarte.workouttracker.ui.common.rememberImageBitmap
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.time.Clock as KotlinClock
 
 internal data class DraftItem(val type: WorkoutItemType, val exercise: Exercise? = null, val members: List<Exercise> = emptyList(), val rounds: Int = 3, val reps: Int = 10, val rest: Int = 60)
-internal object DraftStore { val byWorkout = mutableMapOf<String, List<DraftItem>>() }
-
-internal suspend fun duplicateWorkoutWithItems(container: AppContainer, workoutId: String) {
-    val duplicate = container.workouts.duplicate(workoutId) ?: return
-    DraftStore.byWorkout[workoutId]?.let { DraftStore.byWorkout[duplicate.id] = it.toList() }
+/** Turns the editor's draft blocks into the rows saved for a workout. */
+private fun List<DraftItem>.toContent(workoutId: String, stamp: Long): WorkoutContent {
+    val items = mutableListOf<WorkoutItem>()
+    val members = mutableMapOf<String, List<SupersetMember>>()
+    forEach { draft ->
+        val position = items.size
+        val id = "$workoutId-item-$position-$stamp"
+        if (draft.type == WorkoutItemType.SUPERSET) {
+            items += WorkoutItem(id, workoutId, position, WorkoutItemType.SUPERSET, null, sets = 1, rounds = draft.rounds, reps = draft.reps, restSeconds = draft.rest)
+            members[id] = draft.members.mapIndexed { index, member -> SupersetMember("$id-member-$index", id, index, member.id, member.defaultReps) }
+        } else {
+            draft.exercise?.let { exercise ->
+                items += WorkoutItem(id, workoutId, position, WorkoutItemType.REGULAR, exercise.id, sets = exercise.defaultSets, rounds = 1, reps = exercise.defaultReps, restSeconds = exercise.defaultRestSeconds, notes = exercise.notes)
+            }
+        }
+    }
+    return WorkoutContent(items, members)
 }
 
 @Composable
@@ -61,8 +75,9 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
     val library by container.exercises.exercises.collectAsState(initial = emptyList())
     val workout = workouts.firstOrNull { it.id == workoutId }
     val scope = rememberCoroutineScope()
-    var name by remember(workoutId) { mutableStateOf(workout?.name.orEmpty()) }
-    val items = remember(workoutId) { mutableStateListOf<DraftItem>().apply { addAll(workoutId?.let { DraftStore.byWorkout[it] }.orEmpty()) } }
+    // Keyed on the loaded workout so the name fills in once the list arrives.
+    var name by remember(workoutId, workout?.id) { mutableStateOf(workout?.name.orEmpty()) }
+    val items = remember(workoutId) { mutableStateListOf<DraftItem>() }
     var exerciseDialog by remember { mutableStateOf(false) }
     var supersetDialog by remember { mutableStateOf(false) }
     var editingSupersetIndex by remember { mutableStateOf<Int?>(null) }
@@ -72,6 +87,23 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
     var newInLibrary by remember { mutableStateOf(false) }
     var removeTarget by remember { mutableStateOf<Exercise?>(null) }
     val spacing = DuiTheme.spacing
+
+    LaunchedEffect(workoutId) {
+        if (workoutId == null) return@LaunchedEffect
+        val exercises = container.exercises.exercises.first().associateBy { it.id }
+        val content = container.workouts.content(workoutId)
+        val drafts = content.items.sortedBy { it.position }.mapNotNull { row ->
+            if (row.type == WorkoutItemType.SUPERSET) {
+                val members = content.members[row.id].orEmpty().sortedBy { it.position }
+                    .mapNotNull { member -> exercises[member.exerciseId]?.copy(defaultReps = member.reps) }
+                DraftItem(WorkoutItemType.SUPERSET, members = members, rounds = row.rounds, reps = row.reps, rest = row.restSeconds)
+            } else {
+                exercises[row.exerciseId]?.let { DraftItem(WorkoutItemType.REGULAR, exercise = it, rounds = row.sets, reps = row.reps, rest = row.restSeconds) }
+            }
+        }
+        items.clear()
+        items.addAll(drafts)
+    }
 
     Column(Modifier.fillMaxSize()) {
         DuiTopBar(onBack = onBack, actionText = "Save", onAction = {
@@ -84,7 +116,7 @@ fun WorkoutEditorScreen(container: AppContainer, workoutId: String?, onBack: () 
                 container.workouts.add(savedWorkout)
                 items.filter { it.type == WorkoutItemType.REGULAR }.mapNotNull { it.exercise }.forEach { container.exercises.save(it) }
                 items.flatMap { it.members }.forEach { container.exercises.save(it) }
-                DraftStore.byWorkout[savedWorkout.id] = items.toList()
+                container.workouts.replaceContent(savedWorkout.id, items.toContent(savedWorkout.id, now.toEpochMilliseconds()))
                 onBack()
             }
         })

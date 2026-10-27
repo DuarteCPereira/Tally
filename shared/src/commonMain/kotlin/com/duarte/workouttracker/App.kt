@@ -19,6 +19,7 @@ import com.duarte.dui.theme.DuiTheme
 import com.duarte.workouttracker.domain.ThemeMode
 import com.duarte.workouttracker.ui.home.HomeScreen
 import com.duarte.workouttracker.ui.editor.WorkoutEditorScreen
+import com.duarte.workouttracker.ui.workout.WorkoutRunScreen
 
 private enum class Destination(val label: String, val icon: ImageVector) {
     HOME("Home", DuiIcons.Home),
@@ -47,7 +48,7 @@ private fun AppContent(container: AppContainer) {
     var runningWorkoutId by remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
     val current = backStack.last()
     if (runningWorkoutId != null) {
-        com.duarte.workouttracker.ui.workout.WorkoutRunScreen(runningWorkoutId!!, container, onExit = { runningWorkoutId = null })
+        WorkoutRunScreen(runningWorkoutId!!, container, onExit = { runningWorkoutId = null })
         return
     }
     DuiScaffold(

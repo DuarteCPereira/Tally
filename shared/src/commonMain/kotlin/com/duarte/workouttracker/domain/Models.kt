@@ -31,6 +31,9 @@ data class WorkoutItem(
     val notes: String? = null,
 )
 
+/** The blocks of one workout, with the members of each superset keyed by item id. */
+data class WorkoutContent(val items: List<WorkoutItem>, val members: Map<String, List<SupersetMember>>)
+
 data class SupersetMember(val id: String, val itemId: String, val position: Int, val exerciseId: String, val reps: Int)
 data class WorkoutSettings(
     val restMode: RestMode = RestMode.AUTO,
