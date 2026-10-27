@@ -14,7 +14,7 @@ A small, calm design system for a Compose Multiplatform UI library. It is inspir
 
 | Area | Rule |
 |---|---|
-| Colour | 15 tokens, light and dark. Text on its backgrounds meets 4.5:1 in both themes. |
+| Colour | 16 tokens, light and dark. Text on its backgrounds meets 4.5:1 in both themes. |
 | Type | One family (Inter), five styles: `display`, `title`, `label`, `body`, `caption`. Hierarchy comes from size and weight (400 and 500), never from extra colours. |
 | Spacing | 4px base: `space-1` to `space-7` (4, 8, 12, 16, 24, 32, 48). |
 | Shape | `radius-sm` 8, `radius-md` 12, `radius-lg` 16, `radius-full` for buttons and avatars. |
