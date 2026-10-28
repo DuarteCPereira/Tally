@@ -1,4 +1,4 @@
-rootProject.name = "WorkoutTracker"
+rootProject.name = "Tally"
 
 pluginManagement {
     repositories {

@@ -18,7 +18,7 @@ kotlin {
     }
     
     androidLibrary {
-        namespace = "com.duarte.workouttracker.shared"
+        namespace = "com.tally.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
@@ -52,7 +52,7 @@ kotlin {
 sqldelight {
     databases {
         create("WorkoutDatabase") {
-            packageName.set("com.duarte.workouttracker.database")
+            packageName.set("com.tally.database")
         }
     }
 }

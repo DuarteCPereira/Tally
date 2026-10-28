@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>WorkoutTracker uses the camera to capture workout images.</string>
+	<string>Tally uses the camera to capture workout images.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>WorkoutTracker uses your photo library to select workout images.</string>
+	<string>Tally uses your photo library to select workout images.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 </dict>
