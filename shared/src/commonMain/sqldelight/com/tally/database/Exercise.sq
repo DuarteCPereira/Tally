@@ -65,6 +65,12 @@ CREATE TABLE SessionEntry (
 selectAllWorkouts:
 SELECT * FROM Workout ORDER BY position;
 
+selectWorkout:
+SELECT * FROM Workout WHERE id = ?;
+
+countWorkouts:
+SELECT COUNT(*) FROM Workout;
+
 selectAllExercises:
 SELECT * FROM Exercise ORDER BY name;
 
@@ -86,6 +92,9 @@ SELECT COUNT(*) FROM SessionEntry WHERE completed = 1;
 selectSetting:
 SELECT value FROM Settings WHERE key = ?;
 
+selectAllSettings:
+SELECT * FROM Settings;
+
 upsertExercise:
 INSERT OR REPLACE INTO Exercise(id, name, defaultSets, defaultReps, defaultRestSeconds, notes, imagePath)
 VALUES (?, ?, ?, ?, ?, ?, ?);
@@ -101,6 +110,9 @@ INSERT INTO Workout(id, name, position, createdAt) VALUES (?, ?, ?, ?);
 
 deleteWorkout:
 DELETE FROM Workout WHERE id = ?;
+
+updateWorkoutName:
+UPDATE Workout SET name = ? WHERE id = ?;
 
 updateWorkoutPosition:
 UPDATE Workout SET position = ? WHERE id = ?;

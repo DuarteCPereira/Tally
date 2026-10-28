@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
+import kotlin.time.Duration.Companion.milliseconds
 
 /** Wall-clock rest timer. Remaining values are rounded up and exposed in whole seconds. */
 class RestTimer(
@@ -119,7 +120,7 @@ class RestTimer(
         ticker?.cancel()
         ticker = scope.launch {
             while (endsAtEpochMillis != null) {
-                delay(250)
+                delay(TickInterval)
                 refresh()
             }
         }
@@ -141,5 +142,10 @@ class RestTimer(
         ticker?.cancel()
         ticker = null
         timerNotifier.cancel()
+    }
+
+    private companion object {
+        /** How often the remaining time is recomputed from the wall-clock deadline. */
+        val TickInterval = 250.milliseconds
     }
 }
