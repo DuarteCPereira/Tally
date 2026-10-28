@@ -1,0 +1,27 @@
+<resources>
+    <!--
+        Window theme shown before Compose draws, including the system splash screen. It follows the
+        system light/dark mode so the splash never flashes the opposite colour.
+    -->
+    <style name="Theme.Tally" parent="android:Theme.DeviceDefault.DayNight">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:windowSplashScreenBackground">@color/window_background</item>
+    </style>
+
+    <!--
+        Splash themes for an app theme chosen in Settings rather than following the system. The
+        activity registers the matching one with SplashScreen.setSplashScreenTheme, so the next
+        launch's splash already has the app's colours.
+    -->
+    <style name="Theme.Tally.Light">
+        <item name="android:windowBackground">@color/background_light</item>
+        <item name="android:windowSplashScreenBackground">@color/background_light</item>
+    </style>
+
+    <style name="Theme.Tally.Dark">
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:windowSplashScreenBackground">@color/background_dark</item>
+    </style>
+</resources>

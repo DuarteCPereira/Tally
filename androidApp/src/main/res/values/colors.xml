@@ -1,0 +1,7 @@
+<resources>
+    <!-- The light and dark values of the DUI "bg" token in docs/dui-design-system/tokens.json -->
+    <color name="background_light">#FFFFFF</color>
+    <color name="background_dark">#0B0B0C</color>
+
+    <color name="window_background">@color/background_light</color>
+</resources>
