@@ -6,10 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import com.duarte.dui.components.DuiButton
@@ -20,57 +16,55 @@ import com.duarte.dui.components.DuiText
 import com.duarte.dui.components.DuiTextField
 import com.duarte.dui.components.DuiTextStyle
 import com.duarte.dui.theme.DuiTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tally.domain.Exercise
-import com.tally.domain.newId
+import com.tally.ui.common.ViewModelStoreScope
 import com.tally.ui.common.rememberImageBitmap
-import kotlinx.coroutines.launch
 
 /**
- * Adds a new exercise, or edits [initial]. The photo buttons call [onTakePhoto], which returns the
- * stored photo's path or `null` if the user cancelled.
+ * Adds a new exercise, or edits [initial]. Its draft, validation and photo picking live in an
+ * [ExerciseFormViewModel] scoped to the dialog, so reopening it always starts from [initial].
  */
 @Composable
 internal fun ExerciseFormDialog(
     initial: Exercise?,
-    onTakePhoto: suspend (PhotoSource) -> String?,
+    library: ExerciseLibraryViewModel,
     onDismiss: () -> Unit,
     onSave: (Exercise) -> Unit,
 ) {
-    var form by remember(initial) { mutableStateOf(initial?.let(ExerciseForm::of) ?: ExerciseForm()) }
-    var validation by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
+    ViewModelStoreScope(key = initial?.id) {
+        val form = viewModel { ExerciseFormViewModel(initial, library.photos) }
+        ExerciseFormContent(initial == null, form, onDismiss, onSave)
+    }
+}
+
+@Composable
+private fun ExerciseFormContent(
+    isNew: Boolean,
+    viewModel: ExerciseFormViewModel,
+    onDismiss: () -> Unit,
+    onSave: (Exercise) -> Unit,
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val form = state.form
     val spacing = DuiTheme.spacing
 
     DuiDialog(
         onDismissRequest = onDismiss,
-        title = if (initial == null) "Add exercise" else "Edit exercise",
-        confirmButton = {
-            DuiButton("Save exercise", onClick = {
-                when (val result = form.validate(id = initial?.id ?: newId())) {
-                    is FormResult.Valid -> onSave(result.value)
-                    is FormResult.Invalid -> validation = result.message
-                }
-            })
-        },
+        title = if (isNew) "Add exercise" else "Edit exercise",
+        confirmButton = { DuiButton("Save exercise", onClick = { viewModel.save()?.let(onSave) }) },
         dismissButton = { DuiButton("Cancel", onClick = onDismiss, style = DuiButtonStyle.Ghost) },
     ) {
-        DuiTextField(
-            form.name,
-            {
-                form = form.copy(name = it)
-                validation = null
-            },
-            Modifier.fillMaxWidth(),
-            label = "Exercise name",
-        )
+        DuiTextField(form.name, { viewModel.edit { copy(name = it) } }, Modifier.fillMaxWidth(), label = "Exercise name")
         Row(horizontalArrangement = Arrangement.spacedBy(spacing.space2)) {
-            NumberField("Sets", form.sets, { form = form.copy(sets = it) }, Modifier.weight(1f))
-            NumberField("Reps", form.reps, { form = form.copy(reps = it) }, Modifier.weight(1f))
+            NumberField("Sets", form.sets, { viewModel.edit { copy(sets = it) } }, Modifier.weight(1f))
+            NumberField("Reps", form.reps, { viewModel.edit { copy(reps = it) } }, Modifier.weight(1f))
         }
-        NumberField("Rest (seconds)", form.rest, { form = form.copy(rest = it) }, Modifier.fillMaxWidth())
+        NumberField("Rest (seconds)", form.rest, { viewModel.edit { copy(rest = it) } }, Modifier.fillMaxWidth())
         DuiTextField(
             form.notes,
-            { form = form.copy(notes = it) },
+            { viewModel.edit { copy(notes = it) } },
             Modifier.fillMaxWidth(),
             label = "Notes (optional)",
             singleLine = false,
@@ -80,7 +74,7 @@ internal fun ExerciseFormDialog(
             rememberImageBitmap(path)?.let { DuiImageCard(it, "Exercise photo") }
             DuiButton(
                 "Remove photo",
-                onClick = { form = form.copy(imagePath = null) },
+                onClick = { viewModel.edit { copy(imagePath = null) } },
                 style = DuiButtonStyle.Ghost,
             )
         }
@@ -88,15 +82,14 @@ internal fun ExerciseFormDialog(
             PhotoSource.entries.forEach { source ->
                 DuiButton(
                     source.label,
-                    onClick = {
-                        scope.launch { onTakePhoto(source)?.let { form = form.copy(imagePath = it) } }
-                    },
+                    onClick = { viewModel.pickPhoto(source) },
                     modifier = Modifier.weight(1f),
                     style = DuiButtonStyle.Secondary,
+                    enabled = !state.isPickingPhoto,
                 )
             }
         }
-        validation?.let { DuiText(it, style = DuiTextStyle.Caption, color = DuiTheme.colors.negative) }
+        state.message?.let { DuiText(it, style = DuiTextStyle.Caption, color = DuiTheme.colors.negative) }
     }
 }
 

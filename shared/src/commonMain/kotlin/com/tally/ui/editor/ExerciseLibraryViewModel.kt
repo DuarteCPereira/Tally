@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 /** The exercise library used by the editor's pickers. Changes apply immediately. */
 class ExerciseLibraryViewModel(
     private val exercises: ExerciseRepository,
-    private val photos: ExercisePhotos,
+    internal val photos: ExercisePhotos,
     scope: CoroutineScope = defaultViewModelScope(),
 ) : ViewModel(scope) {
     val library: StateFlow<List<Exercise>> = exercises.exercises
@@ -29,6 +29,4 @@ class ExerciseLibraryViewModel(
     fun remove(exercise: Exercise) {
         viewModelScope.launch { runCatchingNonCancellation { exercises.delete(exercise.id) } }
     }
-
-    suspend fun takePhoto(source: PhotoSource): String? = photos.take(source)
 }

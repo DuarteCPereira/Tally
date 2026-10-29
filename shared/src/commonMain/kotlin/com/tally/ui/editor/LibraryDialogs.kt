@@ -49,7 +49,7 @@ internal fun LibraryPickerDialog(
     if (creating) {
         ExerciseFormDialog(
             initial = null,
-            onTakePhoto = library::takePhoto,
+            library = library,
             onDismiss = { creating = false },
             onSave = { exercise ->
                 library.add(exercise)
