@@ -17,6 +17,9 @@ import platform.darwin.dispatch_async
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlin.coroutines.resume
 
+/** Built-in "Alarm" system sound. Like all system sounds it is muted by the ring/silent switch. */
+private const val TIMER_END_SOUND_ID = 1005u
+
 class IOSPlatform: Platform {
     override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 }
@@ -149,11 +152,7 @@ actual fun createPlatformServices() = PlatformServices(
     imagePicker = IOSImagePicker(),
     feedback = object : Feedback {
         override fun vibrate() { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) }
-        override fun playSound() {
-            val generator = UIImpactFeedbackGenerator(UIImpactFeedbackStyle.UIImpactFeedbackStyleMedium)
-            generator.prepare()
-            generator.impactOccurred()
-        }
+        override fun playSound() { AudioServicesPlaySystemSound(TIMER_END_SOUND_ID) }
     },
     timerNotifier = IOSTimerNotifier(),
 )
