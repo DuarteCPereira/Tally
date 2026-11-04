@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 sealed interface EditorUiState {
     data object Loading : EditorUiState
@@ -43,8 +45,9 @@ sealed interface EditorUiState {
  * Edits the workout identified by [workoutId], or a new one when it is `null`. Nothing is written
  * until [save].
  */
+@KoinViewModel
 class WorkoutEditorViewModel(
-    workoutId: String?,
+    @InjectedParam workoutId: String?,
     private val workouts: WorkoutRepository,
     private val exercises: ExerciseRepository,
     private val clock: Clock = Clock.System,

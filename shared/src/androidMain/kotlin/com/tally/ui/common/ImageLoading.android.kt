@@ -9,5 +9,9 @@ import java.io.File
 
 @Composable
 actual fun rememberImageBitmap(path: String?): ImageBitmap? = remember(path) {
-    path?.let { runCatching { BitmapFactory.decodeFile(File(it).absolutePath)?.asImageBitmap() }.getOrNull() }
+    path?.let {
+        runCatching {
+            BitmapFactory.decodeFile(File(it).absolutePath)?.asImageBitmap()
+        }.getOrNull()
+    }
 }

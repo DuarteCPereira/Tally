@@ -11,11 +11,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.KoinViewModel
 
 /** The exercise library used by the editor's pickers. Changes apply immediately. */
+@KoinViewModel
 class ExerciseLibraryViewModel(
     private val exercises: ExerciseRepository,
-    internal val photos: ExercisePhotos,
     scope: CoroutineScope = defaultViewModelScope(),
 ) : ViewModel(scope) {
     val library: StateFlow<List<Exercise>> = exercises.exercises

@@ -1,16 +1,10 @@
 package com.tally
 
-import app.cash.sqldelight.db.SqlDriver
-
 interface Platform {
     val name: String
 }
 
 expect fun getPlatform(): Platform
-
-expect fun createDatabaseDriver(): SqlDriver
-
-expect fun createPlatformServices(): PlatformServices
 
 interface ImageStorage {
     /** Copies a picked image into app storage and returns the copy's path. */
@@ -35,10 +29,3 @@ interface TimerNotifier {
     fun schedule(endTimeEpochMillis: Long)
     fun cancel()
 }
-
-data class PlatformServices(
-    val imageStorage: ImageStorage,
-    val imagePicker: ImagePicker,
-    val feedback: Feedback,
-    val timerNotifier: TimerNotifier,
-)

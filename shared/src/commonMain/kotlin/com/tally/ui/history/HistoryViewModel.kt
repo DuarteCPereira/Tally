@@ -12,7 +12,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
 import kotlin.time.Clock
+import org.koin.core.annotation.KoinViewModel
 
+@KoinViewModel
 class HistoryViewModel(
     repository: HistoryRepository,
     clock: Clock = Clock.System,

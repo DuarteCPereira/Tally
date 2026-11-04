@@ -49,7 +49,6 @@ internal fun LibraryPickerDialog(
     if (creating) {
         ExerciseFormDialog(
             initial = null,
-            library = library,
             onDismiss = { creating = false },
             onSave = { exercise ->
                 library.add(exercise)

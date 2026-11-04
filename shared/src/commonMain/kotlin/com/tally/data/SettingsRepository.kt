@@ -12,6 +12,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.koin.core.annotation.Single
 
 interface SettingsRepository {
     /** The saved settings, with defaults for anything never saved. */
@@ -20,6 +21,7 @@ interface SettingsRepository {
     suspend fun update(settings: WorkoutSettings)
 }
 
+@Single(binds = [SettingsRepository::class])
 class SqlDelightSettingsRepository(
     database: WorkoutDatabase,
     private val io: CoroutineDispatcher = Dispatchers.IO,

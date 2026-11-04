@@ -9,13 +9,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 /** What the superset dialog shows: the raw [form] and a validation [message]. */
 data class SupersetFormUiState(val form: SupersetForm, val message: String? = null)
 
 /** Owns the superset dialog's draft, member ordering and validation, so the dialog only renders. */
+@KoinViewModel
 class SupersetFormViewModel(
-    private val initial: DraftBlock.Superset?,
+    @InjectedParam private val initial: DraftBlock.Superset?,
     scope: CoroutineScope = defaultViewModelScope(),
 ) : ViewModel(scope) {
     private val key = initial?.key ?: newId()

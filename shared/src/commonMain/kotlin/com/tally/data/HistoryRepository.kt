@@ -11,6 +11,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.koin.core.annotation.Single
 
 interface HistoryRepository {
     /** Every finished session, most recent first. */
@@ -22,6 +23,7 @@ interface HistoryRepository {
     suspend fun addSession(session: Session, entries: List<SessionEntry> = emptyList())
 }
 
+@Single(binds = [HistoryRepository::class])
 class SqlDelightHistoryRepository(
     database: WorkoutDatabase,
     private val io: CoroutineDispatcher = Dispatchers.IO,

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import org.koin.core.annotation.KoinViewModel
 
 sealed interface AppUiState {
     /** The saved theme isn't known yet, so nothing is drawn rather than drawing the wrong theme. */
@@ -18,6 +19,7 @@ sealed interface AppUiState {
     data class Ready(val theme: ThemeMode) : AppUiState
 }
 
+@KoinViewModel
 class AppViewModel(
     settings: SettingsRepository,
     scope: CoroutineScope = defaultViewModelScope(),

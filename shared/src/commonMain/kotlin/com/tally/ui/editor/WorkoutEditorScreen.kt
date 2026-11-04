@@ -173,7 +173,6 @@ private fun EditorDialogHost(
     when (dialog) {
         is EditorDialog.EditExercise -> ExerciseFormDialog(
             initial = dialog.block?.exercise,
-            library = library,
             onDismiss = onClose,
             onSave = { exercise ->
                 dialog.block

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
+import org.koin.core.annotation.Single
 
 interface WorkoutRepository {
     /** All workouts, ordered by position. Emits again whenever a workout changes. */
@@ -40,6 +41,7 @@ interface WorkoutRepository {
     suspend fun reorder(ids: List<String>)
 }
 
+@Single(binds = [WorkoutRepository::class])
 class SqlDelightWorkoutRepository(
     database: WorkoutDatabase,
     private val io: CoroutineDispatcher = Dispatchers.IO,

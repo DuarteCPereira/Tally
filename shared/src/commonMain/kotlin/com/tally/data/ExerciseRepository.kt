@@ -10,6 +10,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.koin.core.annotation.Single
 
 interface ExerciseRepository {
     /** The exercise library, ordered by name. */
@@ -21,6 +22,7 @@ interface ExerciseRepository {
     suspend fun delete(id: String)
 }
 
+@Single(binds = [ExerciseRepository::class])
 class SqlDelightExerciseRepository(
     database: WorkoutDatabase,
     private val io: CoroutineDispatcher = Dispatchers.IO,

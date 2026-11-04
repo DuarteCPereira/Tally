@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Modifier
 import com.duarte.dui.components.DuiButton
 import com.duarte.dui.components.DuiButtonStyle
@@ -24,6 +23,8 @@ import com.duarte.dui.components.DuiTextStyle
 import com.duarte.dui.theme.DuiTheme
 import com.tally.domain.Exercise
 import com.tally.ui.common.ViewModelStoreScope
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * Builds a new superset, or edits [initial], choosing members from the [library]. The draft and its
@@ -37,7 +38,7 @@ internal fun SupersetFormDialog(
     onSave: (DraftBlock.Superset) -> Unit,
 ) {
     ViewModelStoreScope(key = initial?.key) {
-        val form = viewModel { SupersetFormViewModel(initial) }
+        val form = koinViewModel<SupersetFormViewModel> { parametersOf(initial) }
         SupersetFormContent(form, library, onDismiss, onSave)
     }
 }

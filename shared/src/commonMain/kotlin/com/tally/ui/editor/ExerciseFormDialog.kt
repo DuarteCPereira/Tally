@@ -17,10 +17,11 @@ import com.duarte.dui.components.DuiTextField
 import com.duarte.dui.components.DuiTextStyle
 import com.duarte.dui.theme.DuiTheme
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tally.domain.Exercise
 import com.tally.ui.common.ViewModelStoreScope
 import com.tally.ui.common.rememberImageBitmap
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * Adds a new exercise, or edits [initial]. Its draft, validation and photo picking live in an
@@ -29,12 +30,11 @@ import com.tally.ui.common.rememberImageBitmap
 @Composable
 internal fun ExerciseFormDialog(
     initial: Exercise?,
-    library: ExerciseLibraryViewModel,
     onDismiss: () -> Unit,
     onSave: (Exercise) -> Unit,
 ) {
     ViewModelStoreScope(key = initial?.id) {
-        val form = viewModel { ExerciseFormViewModel(initial, library.photos) }
+        val form = koinViewModel<ExerciseFormViewModel> { parametersOf(initial) }
         ExerciseFormContent(initial == null, form, onDismiss, onSave)
     }
 }

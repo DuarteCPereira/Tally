@@ -1,11 +1,13 @@
 package com.tally.ui.editor
 
+import org.koin.core.annotation.Factory
 import com.tally.ImagePicker
 import com.tally.ImageStorage
 
 enum class PhotoSource { GALLERY, CAMERA }
 
 /** Gets a photo for an exercise from the user and keeps a copy in app storage. */
+@Factory
 class ExercisePhotos(private val picker: ImagePicker, private val storage: ImageStorage) {
     /** Returns the stored copy's path, or `null` if the user cancelled. */
     suspend fun take(source: PhotoSource): String? {

@@ -11,12 +11,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.KoinViewModel
 
 sealed interface HomeUiState {
     data object Loading : HomeUiState
     data class Content(val workouts: List<Workout>) : HomeUiState
 }
 
+@KoinViewModel
 class HomeViewModel(
     private val repository: WorkoutRepository,
     scope: CoroutineScope = defaultViewModelScope(),

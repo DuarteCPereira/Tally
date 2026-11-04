@@ -14,12 +14,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.koin.core.annotation.KoinViewModel
 
 sealed interface SettingsUiState {
     data object Loading : SettingsUiState
     data class Content(val settings: WorkoutSettings) : SettingsUiState
 }
 
+@KoinViewModel
 class SettingsViewModel(
     private val repository: SettingsRepository,
     scope: CoroutineScope = defaultViewModelScope(),

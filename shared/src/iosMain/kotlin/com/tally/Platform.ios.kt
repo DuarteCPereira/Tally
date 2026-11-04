@@ -1,8 +1,5 @@
 package com.tally
 
-import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.driver.native.NativeSqliteDriver
-import com.tally.database.WorkoutDatabase
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.*
 import platform.PhotosUI.*
@@ -25,8 +22,6 @@ class IOSPlatform: Platform {
 }
 
 actual fun getPlatform(): Platform = IOSPlatform()
-
-actual fun createDatabaseDriver(): SqlDriver = NativeSqliteDriver(WorkoutDatabase.Schema, "workout.db")
 
 private var imagePickerContinuation: ((String?) -> Unit)? = null
 private var activeImagePicker: UIViewController? = null
@@ -87,7 +82,7 @@ private fun copyImageToDocuments(path: String): String? {
     return if (NSFileManager.defaultManager.copyItemAtURL(source, destination, null)) destination.path else null
 }
 
-private class IOSImagePicker : ImagePicker {
+internal class IOSImagePicker : ImagePicker {
     override suspend fun pickFromGallery(): String? = showPicker(camera = false)
     override suspend fun takePhoto(): String? = showPicker(camera = true)
 
@@ -119,7 +114,7 @@ private class IOSImagePicker : ImagePicker {
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private class IOSImageStorage : ImageStorage {
+internal class IOSImageStorage : ImageStorage {
     override suspend fun copyPickedImage(sourcePath: String): String {
         val source = NSURL.fileURLWithPath(sourcePath)
         val destination = documentsImageDirectory().URLByAppendingPathComponent("image-${NSDate().timeIntervalSince1970}.jpg")!!
@@ -130,7 +125,7 @@ private class IOSImageStorage : ImageStorage {
     }
 }
 
-private class IOSTimerNotifier : TimerNotifier {
+internal class IOSTimerNotifier : TimerNotifier {
     private val center = UNUserNotificationCenter.currentNotificationCenter()
     override fun schedule(endTimeEpochMillis: Long) {
         center.requestAuthorizationWithOptions(UNAuthorizationOptionAlert or UNAuthorizationOptionSound) { _, _ -> }
@@ -147,12 +142,7 @@ private class IOSTimerNotifier : TimerNotifier {
     override fun cancel() { center.removePendingNotificationRequestsWithIdentifiers(listOf("workout-timer")) }
 }
 
-actual fun createPlatformServices() = PlatformServices(
-    imageStorage = IOSImageStorage(),
-    imagePicker = IOSImagePicker(),
-    feedback = object : Feedback {
-        override fun vibrate() { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) }
-        override fun playSound() { AudioServicesPlaySystemSound(TIMER_END_SOUND_ID) }
-    },
-    timerNotifier = IOSTimerNotifier(),
-)
+internal class IOSFeedback : Feedback {
+    override fun vibrate() { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) }
+    override fun playSound() { AudioServicesPlaySystemSound(TIMER_END_SOUND_ID) }
+}

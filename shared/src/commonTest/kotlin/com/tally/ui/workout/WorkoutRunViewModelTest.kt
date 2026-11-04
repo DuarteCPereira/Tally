@@ -4,6 +4,7 @@ import com.tally.Feedback
 import com.tally.TimerNotifier
 import com.tally.domain.RestMode
 import com.tally.domain.RestTimer
+import com.tally.domain.RestTimerFactory
 import com.tally.domain.WorkoutSettings
 import com.tally.fakes.Exercises
 import com.tally.fakes.FakeExerciseRepository
@@ -137,7 +138,7 @@ class WorkoutRunViewModelTest {
             settings = FakeSettingsRepository(settings),
             history = history,
         ),
-        createTimer = { timer() },
+        timerFactory = RestTimerFactory { timer() },
         scope = viewModelTestScope(),
     )
 

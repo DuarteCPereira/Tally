@@ -1,5 +1,6 @@
 package com.tally
 
+import android.Manifest
 import android.os.Build
 import android.content.Context
 import android.app.AlarmManager
@@ -13,10 +14,8 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.media.AudioManager
 import android.media.ToneGenerator
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
-import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.driver.android.AndroidSqliteDriver
-import com.tally.database.WorkoutDatabase
 import java.io.File
 import java.io.FileOutputStream
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -27,13 +26,6 @@ class AndroidPlatform : Platform {
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()
-
-actual fun createDatabaseDriver(): SqlDriver = AndroidSqliteDriver(WorkoutDatabase.Schema, appContext, "workout.db")
-
-// The host app can install its Context before constructing the container.
-private lateinit var appContext: Context
-fun installTallyContext(context: Context) { appContext = context.applicationContext }
-
 
 /** Activity-result launchers must be registered by the host Activity. */
 object AndroidImagePickerHost {
@@ -63,22 +55,21 @@ object AndroidImagePickerHost {
     @Volatile var pendingCameraUri: String? = null
 }
 
-private class AndroidImageStorage : ImageStorage {
+internal class AndroidImageStorage(private val context: Context) : ImageStorage {
     override suspend fun copyPickedImage(sourcePath: String): String {
         val uri = Uri.parse(sourcePath)
-        val input = (if (uri.scheme == "content") appContext.contentResolver.openInputStream(uri)
+        val input = (if (uri.scheme == "content") context.contentResolver.openInputStream(uri)
         else File(uri.path ?: sourcePath).inputStream())
             ?: throw IllegalArgumentException("Unable to open image: $sourcePath")
-        val directory = File(appContext.filesDir, "images").apply { mkdirs() }
+        val directory = File(context.filesDir, "images").apply { mkdirs() }
         val destination = File(directory, "${System.currentTimeMillis()}-${(uri.lastPathSegment ?: "image").substringAfterLast('/')}")
         input.use { source -> FileOutputStream(destination).use { output -> source.copyTo(output) } }
         return destination.absolutePath
     }
 }
 
-private class AndroidTimerNotifier : TimerNotifier {
+internal class AndroidTimerNotifier(private val context: Context) : TimerNotifier {
     override fun schedule(endTimeEpochMillis: Long) {
-        val context = appContext
         val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pending = timerPendingIntent(context)
         alarm.cancel(pending)
@@ -86,7 +77,6 @@ private class AndroidTimerNotifier : TimerNotifier {
     }
 
     override fun cancel() {
-        val context = appContext
         (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).cancel(timerPendingIntent(context))
     }
 }
@@ -118,19 +108,18 @@ class WorkoutTimerReceiver : BroadcastReceiver() {
     }
 }
 
-actual fun createPlatformServices() = PlatformServices(
-    imageStorage = AndroidImageStorage(),
-    imagePicker = object : ImagePicker {
-        override suspend fun pickFromGallery(): String? = AndroidImagePickerHost.pickGallery()
-        override suspend fun takePhoto(): String? = AndroidImagePickerHost.takePhoto()
-    },
-    feedback = object : Feedback {
-        override fun vibrate() {
-            val vibrator = appContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) vibrator.vibrate(VibrationEffect.createOneShot(80, VibrationEffect.DEFAULT_AMPLITUDE))
-            else @Suppress("DEPRECATION") vibrator.vibrate(80)
-        }
-        override fun playSound() { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80).apply { startTone(ToneGenerator.TONE_PROP_BEEP, 150); release() } }
-    },
-    timerNotifier = AndroidTimerNotifier(),
-)
+internal class AndroidImagePicker : ImagePicker {
+    override suspend fun pickFromGallery(): String? = AndroidImagePickerHost.pickGallery()
+    override suspend fun takePhoto(): String? = AndroidImagePickerHost.takePhoto()
+}
+
+internal class AndroidFeedback(private val context: Context) : Feedback {
+    @RequiresPermission(Manifest.permission.VIBRATE)
+    override fun vibrate() {
+        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) vibrator.vibrate(VibrationEffect.createOneShot(80, VibrationEffect.DEFAULT_AMPLITUDE))
+        else @Suppress("DEPRECATION") vibrator.vibrate(80)
+    }
+
+    override fun playSound() { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80).apply { startTone(ToneGenerator.TONE_PROP_BEEP, 150); release() } }
+}

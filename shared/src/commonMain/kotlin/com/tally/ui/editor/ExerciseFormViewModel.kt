@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 /** What the exercise dialog shows: the raw [form], a validation or photo [message], and whether a picker is open. */
 data class ExerciseFormUiState(
@@ -21,8 +23,9 @@ data class ExerciseFormUiState(
 )
 
 /** Owns the exercise dialog's draft, its validation and the photo picking, so the dialog only renders. */
+@KoinViewModel
 class ExerciseFormViewModel(
-    initial: Exercise?,
+    @InjectedParam initial: Exercise?,
     private val photos: ExercisePhotos,
     scope: CoroutineScope = defaultViewModelScope(),
 ) : ViewModel(scope) {
