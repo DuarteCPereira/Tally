@@ -5,6 +5,8 @@
 Build a routine, tap through your sets, and watch your progress add up.
 No account, no login, no ads, no subscription. Just open it and train.
 
+**Website:** [duartecpereira.github.io/Tally](https://duartecpereira.github.io/Tally/)
+
 <p align="center">
   <img src="docs/screenshots/home.png" alt="Home screen with a list of workouts" width="22%">
   <img src="docs/screenshots/run.png" alt="Running a workout" width="22%">
@@ -89,18 +91,24 @@ Tally is a Kotlin Multiplatform app with a shared Compose Multiplatform UI for *
 | [`dui-lib`](./dui-lib) | DUI-lib, the design system and component library the app is built on (no Material 3). |
 | [`dui-sample`](./dui-sample) | A gallery app that shows the theme and every DUI component. |
 | [`docs/dui-design-system`](./docs/dui-design-system) | The design tokens and principles. |
+| [`site-shared`](./site-shared) | The website copy and statistics logic, shared by both websites (Kotlin/Wasm and an npm package). |
+| [`site-compose`](./site-compose) | The website in Compose Multiplatform, compiled to WebAssembly. |
+| [`site-react`](./site-react) | The same website in Vite + React + TypeScript. See [the comparison](./docs/web-comparison.md). |
 
 ### Run it
 
 - Android: `./gradlew :androidApp:assembleDebug`, or use the run configuration in your IDE.
 - iOS: open [`iosApp`](./iosApp) in Xcode and run it.
 - Component gallery: run the `dui-sample` module.
+- Website (Compose): `./gradlew :site-compose:wasmJsBrowserDevelopmentRun`
+- Website (React, Node 22.12+): `./gradlew :site-shared:jsBrowserProductionLibraryDistribution`, then `cd site-react && npm install && npm run dev`
 
 ### Test it
 
 - Android host tests: `./gradlew :shared:testAndroidHostTest`
 - iOS simulator tests: `./gradlew :shared:iosSimulatorArm64Test`
+- Website logic: `./gradlew :site-shared:jsNodeTest`
 
 ## Updating the screenshots
 
-The images above live in [`docs/screenshots`](./docs/screenshots) and are expected as: `home.png`, `editor.png`, `library.png`, `run.png`, `rest.png`, `summary.png`, `history.png`, `session-detail.png` and `settings.png`. Capture them from a real device or emulator (portrait, light theme) and replace the files.
+The images above live in [`docs/screenshots`](./docs/screenshots) and are expected as: `home.png`, `editor.png`, `library.png`, `run.png`, `rest.png`, `summary.png`, `history.png`, `session-detail.png` and `settings.png`. Capture them from a real device or emulator (portrait, light theme) and replace the files. The websites use resized copies of `run`, `rest`, `editor` and `summary` in `site-compose/src/commonMain/composeResources/drawable` and `site-react/public/screens`; refresh those too.
