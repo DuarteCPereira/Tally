@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,11 +29,15 @@ import com.duarte.dui.theme.DuiTheme
  */
 internal val LocalOnSurface = compositionLocalOf { false }
 
-/** Draws the 2dp `focus` ring, 2dp outside [shape], while [source] is focused. */
+/**
+ * Draws the 2dp `focus` ring, 2dp outside [shape], while [source] is focused by the keyboard.
+ * Like CSS `:focus-visible`, a mouse click on the web focuses the element but shows no ring.
+ */
 @Composable
 internal fun Modifier.duiFocusRing(source: InteractionSource, shape: Shape): Modifier {
     val focused by source.collectIsFocusedAsState()
-    if (!focused) return this
+    val keyboard = LocalInputModeManager.current.inputMode == InputMode.Keyboard
+    if (!focused || !keyboard) return this
     val color = DuiTheme.colors.focus
     return drawWithContent {
         drawContent()

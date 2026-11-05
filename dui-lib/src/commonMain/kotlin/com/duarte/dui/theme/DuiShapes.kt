@@ -16,6 +16,8 @@ data class DuiShapes(
     val md: Shape = RoundedCornerShape(12.dp),
     /** 16: cards and sheets. */
     val lg: Shape = RoundedCornerShape(16.dp),
+    /** 48, web only: the outer corner of a phone frame around an app screen. */
+    val device: Shape = RoundedCornerShape(48.dp),
     /** Fully rounded: buttons, avatars and pills. */
     val full: Shape = CircleShape,
 )

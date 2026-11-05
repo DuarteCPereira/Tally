@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
@@ -8,6 +10,12 @@ plugins {
 kotlin {
     iosArm64()
     iosSimulatorArm64()
+
+    // The Compose website (:site-compose) runs the library in the browser.
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+    }
 
     androidLibrary {
         namespace = "com.duarte.dui"

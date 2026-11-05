@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import com.duarte.dui.internal.DuiDimens
 import com.duarte.dui.internal.DuiRawText
 import com.duarte.dui.internal.LocalOnSurface
 import com.duarte.dui.internal.duiClickable
@@ -34,8 +35,17 @@ enum class DuiButtonStyle {
     Ghost,
 }
 
+/** Button heights. */
+enum class DuiButtonSize {
+    /** 48 (`space-7`), full width. The app default. */
+    Regular,
+
+    /** 40, as wide as its label. Web headers and other tight spots. */
+    Small,
+}
+
 /**
- * Full-width, pill-shaped button. When [enabled] is false it uses `surface` with `text-disabled`
+ * Pill-shaped button, full width at [DuiButtonSize.Regular] and label-wide at [DuiButtonSize.Small]. When [enabled] is false it uses `surface` with `text-disabled`
  * whatever the [style].
  */
 @Composable
@@ -45,6 +55,7 @@ fun DuiButton(
     modifier: Modifier = Modifier,
     style: DuiButtonStyle = DuiButtonStyle.Primary,
     enabled: Boolean = true,
+    size: DuiButtonSize = DuiButtonSize.Regular,
 ) {
     val colors = DuiTheme.colors
     val shape = DuiTheme.shapes.full
@@ -60,12 +71,12 @@ fun DuiButton(
     }
     Box(
         modifier
-            .fillMaxWidth()
-            .height(DuiTheme.spacing.space7)
+            .then(if (size == DuiButtonSize.Regular) Modifier.fillMaxWidth() else Modifier)
+            .height(if (size == DuiButtonSize.Regular) DuiTheme.spacing.space7 else DuiDimens.SmallButtonHeight)
             .duiFocusRing(source, shape)
             .duiClickable(source, Role.Button, enabled, onClick)
             .background(fill, shape)
-            .padding(horizontal = DuiTheme.spacing.space5),
+            .padding(horizontal = if (size == DuiButtonSize.Regular) DuiTheme.spacing.space5 else DuiTheme.spacing.space4),
         contentAlignment = Alignment.Center,
     ) {
         DuiRawText(text, DuiTheme.typography.label, content, maxLines = 1)

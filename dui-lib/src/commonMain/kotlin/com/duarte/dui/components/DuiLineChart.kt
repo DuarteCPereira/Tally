@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import com.duarte.dui.internal.DuiDimens
 import com.duarte.dui.internal.DuiRawText
 import com.duarte.dui.internal.duiFocusRing
@@ -38,20 +39,21 @@ fun DuiLineChart(
     trend: DuiTrend,
     contentDescription: String,
     modifier: Modifier = Modifier,
+    height: Dp = DuiDimens.ChartHeight,
 ) {
     val color = trend.color(DuiTheme.colors)
-    Canvas(modifier.fillMaxWidth().height(DuiDimens.ChartHeight), contentDescription) {
+    Canvas(modifier.fillMaxWidth().height(height), contentDescription) {
         if (points.size < 2) return@Canvas
         val stroke = DuiDimens.ChartStroke.toPx()
         val min = points.min()
         val range = points.max() - min
         val width = size.width - stroke
-        val height = size.height - stroke
+        val plotHeight = size.height - stroke
         val path = Path()
         points.forEachIndexed { i, point ->
             val x = stroke / 2 + width * i / (points.size - 1)
             val fraction = if (range == 0f) 0.5f else (point - min) / range
-            val y = stroke / 2 + height * (1f - fraction)
+            val y = stroke / 2 + plotHeight * (1f - fraction)
             if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
         drawPath(path, color, style = Stroke(stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))

@@ -8,8 +8,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.duarte.dui.theme.DuiTheme
 
-/** The five DUI text styles. Hierarchy comes from size and weight only. */
-enum class DuiTextStyle { Display, Title, Label, Body, Caption }
+/**
+ * The DUI text styles. Hierarchy comes from size and weight only. The app uses [Display] to
+ * [Caption]; [Hero], [Eyebrow] and [Counter] are for the website and marketing visuals.
+ */
+enum class DuiTextStyle { Hero, Display, Title, Label, Body, Caption, Eyebrow, Counter }
 
 /** Text in one of the five DUI styles. Pass a colour token from [DuiTheme.colors]. */
 @Composable
@@ -23,7 +26,10 @@ fun DuiText(
 ) {
     val t = DuiTheme.typography
     val base = when (style) {
+        DuiTextStyle.Hero -> t.hero
         DuiTextStyle.Display -> t.display
+        DuiTextStyle.Eyebrow -> t.eyebrow
+        DuiTextStyle.Counter -> t.counter
         DuiTextStyle.Title -> t.title
         DuiTextStyle.Label -> t.label
         DuiTextStyle.Body -> t.body

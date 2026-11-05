@@ -59,6 +59,12 @@ object DuiIcons {
     val ArrowDown by lazy { icon("arrow-down", "M12 5v14", "M6 13l6 6 6-6") }
     val TrendUp by lazy { icon("trend-up", "M4 18l5-6 4 3 7-9") }
     val Sets by lazy { icon("sets", "M4 7h16", "M4 12h16", "M4 17h16") }
+    val Download by lazy { icon("download", "M12 4v12", "M7 11l5 5 5-5", "M5 20h14") }
+    val Search by lazy { icon("search", "M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0 -14", "M16 16l4 4") }
+    val Speaker by lazy { icon("speaker", "M5 9v6h3l5 4V5L8 9z", "M17 9a4 4 0 0 1 0 6") }
+    val Contrast by lazy {
+        icon("contrast", "M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0", "M12 3v18", "M12 8l5-4", "M12 13l8-6", "M12 18l8-7")
+    }
     val Spark by lazy { icon("spark", "M12 4v16", "M4 12h16", "M6.5 6.5l11 11", "M17.5 6.5l-11 11") }
 
     private fun icon(name: String, vararg paths: String): ImageVector =

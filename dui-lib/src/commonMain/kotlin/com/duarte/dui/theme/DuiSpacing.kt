@@ -22,6 +22,10 @@ data class DuiSpacing(
     val space6: Dp = 32.dp,
     /** 48: button height and minimum touch target. */
     val space7: Dp = 48.dp,
+    /** 64, web only: between blocks inside a section, and the site header height. */
+    val space8: Dp = 64.dp,
+    /** 96, web only: vertical padding of a page section (64 on phones). */
+    val space9: Dp = 96.dp,
 )
 
 val LocalDuiSpacing = staticCompositionLocalOf { DuiSpacing() }

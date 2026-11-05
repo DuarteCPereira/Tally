@@ -37,4 +37,26 @@ internal object DuiDimens {
 
     /** BottomBar README: keep it to five tabs at most. */
     const val MaxTabs = 5
+
+    /** DuiSiteHeader README: the small 40px primary button. */
+    val SmallButtonHeight = 40.dp
+
+    /** DuiStoreButton README: 56px tall. */
+    val StoreButtonHeight = 56.dp
+
+    /** DuiSiteSection README: the 1200px content column and the 48px hairline grid. */
+    val SiteContentMaxWidth = 1200.dp
+    val SiteGridCell = 48.dp
+
+    /** Website mockup: links hide below 720px. */
+    val SiteCompactBreakpoint = 720.dp
+
+    /** DuiDeviceFrame README: 10px bezel, 38px screen corners, app screens laid out at 390 x 844. */
+    val DeviceBezel = 10.dp
+    val DeviceScreenRadius = 38.dp
+    val DeviceScreenWidth = 390.dp
+    val DeviceScreenHeight = 844.dp
+
+    /** DuiFeatureCard mockup: 48px round icon chip. */
+    val FeatureIconChip = 48.dp
 }

@@ -18,8 +18,9 @@ fun DuiTheme(
     content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) DuiColors.Dark else DuiColors.Light
-    val fontFamily = interFontFamily()
-    val typography = remember(fontFamily) { DuiTypography.from(fontFamily) }
+    val sans = interFontFamily()
+    val mono = monoFontFamily()
+    val typography = remember(sans, mono) { DuiTypography.from(sans, mono) }
     val selectionColors = remember(colors) {
         TextSelectionColors(handleColor = colors.accent, backgroundColor = colors.accentSoft)
     }
