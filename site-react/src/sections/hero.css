@@ -1,0 +1,24 @@
+.hero-copy { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-5); }
+.hero-chip {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-full); background: var(--surface);
+}
+.hero-body { max-width: 460px; }
+@media (max-width: 720px) {
+  /* The hero steps down to display size on phones. */
+  .hero-title { font: var(--type-display); letter-spacing: var(--tracking-display); }
+}
+
+.hero-phone { display: flex; justify-content: center; }
+.hero-frame { position: relative; }
+.callout { position: absolute; display: flex; align-items: center; transform: translateY(-50%); }
+/* The dot sits 32px inside the frame edge; the label hangs outside it. */
+.callout.start { right: calc(100% - 32px); }
+.callout.end { left: calc(100% - 32px); }
+.callout-label {
+  padding: 6px var(--space-3); border-radius: var(--radius-full); white-space: nowrap;
+  background: var(--bg); outline: 1px solid var(--divider);
+}
+.callout-line { width: 56px; height: 1px; background: var(--text-secondary); }
+.callout-dot { width: 7px; height: 7px; border-radius: var(--radius-full); background: var(--accent); }
+@media (max-width: 980px) { .callout { display: none; } }

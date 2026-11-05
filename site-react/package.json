@@ -1,0 +1,29 @@
+{
+  "name": "tally-site-react",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "shared": "cd .. && ./gradlew :site-shared:jsBrowserProductionLibraryDistribution -q",
+    "predev": "npm run shared",
+    "dev": "vite",
+    "prebuild": "npm run shared",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tally-site-shared": "file:../site-shared/build/dist/js/productionLibrary"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}
